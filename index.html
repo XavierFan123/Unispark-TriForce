@@ -183,18 +183,85 @@
     };
 
     const technicalAnalysis = {
-      calculateIndicators:d=>d.map((r,i,a)=>{let M20=null,tr='未知';if(i>=19){const p=a.slice(i-19,i+1).map(x=>x.indicatorPrice);if(p.length===20&&p.every(n=>typeof n==='number')){M20=p.reduce((x,y)=>x+y,0)/20;const pM20=a[i-1].MA20;if(pM20)tr=M20>pM20?'上升':'下降'}}return{...r,MA20:M20,MAtrend:tr}}),
-      generateSignals:d=>d.reduce((a,r,i)=>{let s='',p=i>0?a[i-1].POSITION:'空仓';if(i>=19&&r.MA20!=null&&r.MAtrend!=='未知'){const pr=r.indicatorPrice,m=r.MA20,t=r.MAtrend;if(p==='空仓'&&t==='上升'&&pr>m*1.01){s='买入';p='持有'}if(p==='持有'&&t==='下降'&&pr<m*0.99){s='卖出';p='空仓'}}a.push({...r,Signal:s,POSITION:p});return a},[]),
+      calculateIndicators(data) {
+        return data.map((row, index, arr) => {
+          let MA20 = null, MAtrend = '未知';
+          if (index >= 19) {
+            const prices = arr.slice(index - 19, index + 1).map(r => r.indicatorPrice);
+            if (prices.length === 20 && prices.every(p => typeof p === 'number' && !isNaN(p))) {
+              MA20 = prices.reduce((sum, p) => sum + p, 0) / 20;
+              const prevMA20 = arr[index - 1].MA20;
+              if (prevMA20 != null) {
+                MAtrend = MA20 > prevMA20 ? '上升' : '下降';
+              }
+            }
+          }
+          return { ...row, MA20, MAtrend };
+        });
+      },
+      generateSignals(data) {
+        return data.reduce((accumulator, row, index) => {
+          let signal = '', position = index > 0 ? accumulator[index - 1].POSITION : '空仓';
+          if (index >= 19 && row.MA20 != null && row.MAtrend !== '未知') {
+            const price = row.indicatorPrice, ma = row.MA20, trend = row.MAtrend;
+            if (position === '空仓' && trend === '上升' && price > ma * 1.01) {
+              signal = '买入';
+              position = '持有';
+            }
+            if (position === '持有' && trend === '下降' && price < ma * 0.99) {
+              signal = '卖出';
+              position = '空仓';
+            }
+          }
+          accumulator.push({ ...row, Signal: signal, POSITION: position });
+          return accumulator;
+        }, []);
+      },
     };
 
     const ui = {
-      renderAssetTabs:()=>`<div class="flex justify-center mb-8"><div class="flex bg-gray-900 bg-opacity-50 rounded-2xl p-2 space-x-2">${Object.keys(state.assetConfigs).map(a=>{const c=state.assetConfigs[a],i=a===state.currentAsset;return`<div class="asset-tab black-gold-card rounded-xl px-4 py-2 md:px-6 md:py-3 ${i?'active':''}" onclick="app.switchAsset('${a}')" style="border-color:${i?c.color+'80':'rgba(212,175,55,0.3)'}"><div class="flex items-center space-x-3"><span class="text-xl md:text-2xl">${c.symbol}</span><div><div class="font-semibold text-gray-200 text-sm md:text-base">${a}</div><div class="hidden md:block text-xs text-gray-400">${c.name}</div></div></div></div>`}).join('')}</div></div>`,
-      renderMetricCard:(t,v,s,i,c,vc='')=>`<div class="black-gold-card rounded-2xl p-5"><div class="flex items-center justify-between mb-3"><h2 class="text-base font-semibold text-gray-300">${t}</h2><span class="text-2xl">${i}</span></div><p class="text-2xl md:text-3xl font-bold mb-1 ${vc}" style="color:${c};">${v}</p><p class="text-gray-500 text-xs md:text-sm">${s}</p></div>`,
-      renderSignalList:s=>s.length?s.map(r=>`<div class="bg-gray-900 bg-opacity-50 rounded-xl p-3 flex justify-between items-center border border-gray-700 hover:border-amber-500 transition-colors duration-300"><span class="text-gray-400 text-sm">${utils.formatDate(r.date).substring(5)}</span><span class="px-3 py-1 rounded-full text-xs font-medium ${r.Signal==='买入'?'bg-green-500 bg-opacity-20 text-green-300':'bg-red-500 bg-opacity-20 text-red-300'}">${r.Signal}</span><span class="font-mono text-gray-200 font-bold">$${utils.formatNumber(r.price)}</span></div>`).join(''):`<div class="text-gray-500 text-center py-8">暂无近期交易信号</div>`,
+      renderAssetTabs() {
+        return `<div class="flex justify-center mb-8"><div class="flex bg-gray-900 bg-opacity-50 rounded-2xl p-2 space-x-2">${Object.keys(state.assetConfigs).map(asset => {
+          const config = state.assetConfigs[asset];
+          const isActive = asset === state.currentAsset;
+          return `<div class="asset-tab black-gold-card rounded-xl px-4 py-2 md:px-6 md:py-3 ${isActive ? 'active' : ''}" onclick="app.switchAsset('${asset}')" style="border-color:${isActive ? config.color + '80' : 'rgba(212, 175, 55, 0.3)'}"><div class="flex items-center space-x-3"><span class="text-xl md:text-2xl">${config.symbol}</span><div><div class="font-semibold text-gray-200 text-sm md:text-base">${asset}</div><div class="hidden md:block text-xs text-gray-400">${config.name}</div></div></div></div>`;
+        }).join('')}</div></div>`;
+      },
+      renderMetricCard(title, value, subtitle, icon, color, valueClass = '') {
+        return `<div class="black-gold-card rounded-2xl p-5"><div class="flex items-center justify-between mb-3"><h2 class="text-base font-semibold text-gray-300">${title}</h2><span class="text-2xl">${icon}</span></div><p class="text-2xl md:text-3xl font-bold mb-1 ${valueClass}" style="color:${color};">${value}</p><p class="text-gray-500 text-xs md:text-sm">${subtitle}</p></div>`;
+      },
+      renderSignalList(signals) {
+        if (!signals.length) return '<div class="text-gray-500 text-center py-8">暂无近期交易信号</div>';
+        return signals.map(s => `<div class="bg-gray-900 bg-opacity-50 rounded-xl p-3 flex justify-between items-center border border-gray-700 hover:border-amber-500 transition-colors duration-300"><span class="text-gray-400 text-sm">${utils.formatDate(s.date).substring(5)}</span><span class="px-3 py-1 rounded-full text-xs font-medium ${s.Signal === '买入' ? 'bg-green-500 bg-opacity-20 text-green-300' : 'bg-red-500 bg-opacity-20 text-red-300'}">${s.Signal}</span><span class="font-mono text-gray-200 font-bold">$${utils.formatNumber(s.price)}</span></div>`).join('');
+      },
     };
 
     const chartRenderer = {
-      render(d,c){state.destroyChart();const x=document.getElementById('chart');if(!x)return;const a=d.slice(-90),ds=[{label:`${state.currentAsset}价格`,data:a.map(r=>r.price),borderColor:c.color,backgroundColor:c.color+'20',borderWidth:2,tension:0.4,fill:true,pointRadius:0},{label:'20日均线',data:a.map(r=>r.MA20),borderColor:'#E0E0E0',borderWidth:1.5,borderDash:[5,5],tension:0.4,fill:false,pointRadius:0},{label:'买入信号',data:a.map(r=>r.Signal==='买入'?r.price:null),pointStyle:'triangle',rotation:0,backgroundColor:'#28a745',borderColor:'#fff',borderWidth:1,pointRadius:8,pointHoverRadius:10,showLine:false},{label:'卖出信号',data:a.map(r=>r.Signal==='卖出'?r.price:null),pointStyle:'triangle',rotation:180,backgroundColor:'#dc3545',borderColor:'#fff',borderWidth:1,pointRadius:8,pointHoverRadius:10,showLine:false}];if(state.currentAsset==='TQQQ')ds.splice(1,0,{label:'QQQ价格',data:a.map(r=>r.secondaryPrice),borderColor:'#9CA3AF',borderWidth:1.5,tension:0.4,fill:false,pointRadius:0,yAxisID:'y1'});const o={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#E0E0E0',font:{size:12},usePointStyle:true,padding:20}},tooltip:{mode:'index',intersect:false,backgroundColor:'rgba(0,0,0,0.9)',titleColor:c.color,bodyColor:'#E0E0E0',borderColor:c.color+'80',borderWidth:1,cornerRadius:8,callbacks:{label:ctx=>`${ctx.dataset.label}: $${utils.formatNumber(ctx.parsed.y)}`}}},scales:{x:{ticks:{color:'#888',font:{size:10}},grid:{color:c.color+'10'}},y:{position:'right',ticks:{callback:v=>'$'+utils.formatNumber(v),color:'#888',font:{size:10}},grid:{color:c.color+'20',drawBorder:false}}},interaction:{mode:'nearest',axis:'x',intersect:false}};if(state.currentAsset==='TQQQ')o.scales.y1={type:'linear',display:false,position:'left'};state.chartInstance=new Chart(x.getContext('2d'),{type:'line',data:{labels:a.map(r=>utils.formatDate(r.date).substring(5)),datasets:ds},options:o})},
+      render(data, config) {
+        state.destroyChart();
+        const ctx = document.getElementById('chart');
+        if (!ctx) return;
+        const chartData = data.slice(-90);
+        const datasets = [
+          { label: `${state.currentAsset}价格`, data: chartData.map(r => r.price), borderColor: config.color, backgroundColor: config.color + '20', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0 },
+          { label: '20日均线', data: chartData.map(r => r.MA20), borderColor: '#E0E0E0', borderWidth: 1.5, borderDash: [5, 5], tension: 0.4, fill: false, pointRadius: 0 },
+          { label: '买入信号', data: chartData.map(r => r.Signal === '买入' ? r.price : null), pointStyle: 'triangle', rotation: 0, backgroundColor: '#28a745', borderColor: '#fff', borderWidth: 1, pointRadius: 8, pointHoverRadius: 10, showLine: false },
+          { label: '卖出信号', data: chartData.map(r => r.Signal === '卖出' ? r.price : null), pointStyle: 'triangle', rotation: 180, backgroundColor: '#dc3545', borderColor: '#fff', borderWidth: 1, pointRadius: 8, pointHoverRadius: 10, showLine: false }
+        ];
+        if (state.currentAsset === 'TQQQ') {
+          datasets.splice(1, 0, { label: 'QQQ价格', data: chartData.map(r => r.secondaryPrice), borderColor: '#9CA3AF', borderWidth: 1.5, tension: 0.4, fill: false, pointRadius: 0, yAxisID: 'y1' });
+        }
+        const options = {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: '#E0E0E0', font: { size: 12 }, usePointStyle: true, padding: 20 } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.9)', titleColor: config.color, bodyColor: '#E0E0E0', borderColor: config.color + '80', borderWidth: 1, cornerRadius: 8, callbacks: { label: ctx => `${ctx.dataset.label}: $${utils.formatNumber(ctx.parsed.y)}` } } },
+          scales: { x: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: config.color + '10' } }, y: { position: 'right', ticks: { callback: v => '$' + utils.formatNumber(v), color: '#888', font: { size: 10 } }, grid: { color: config.color + '20', drawBorder: false } } },
+          interaction: { mode: 'nearest', axis: 'x', intersect: false }
+        };
+        if (state.currentAsset === 'TQQQ') {
+          options.scales.y1 = { type: 'linear', display: false, position: 'left' };
+        }
+        state.chartInstance = new Chart(ctx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => utils.formatDate(r.date).substring(5)), datasets: datasets }, options: options });
+      },
     };
     
     class QuantApp {
@@ -222,84 +289,50 @@
         this.pauseAutoRefresh();
         state.refreshInterval = setInterval(() => { if (!document.hidden && !state.isLoading) this.renderDashboard(); }, 5 * 60 * 1000);
       }
-      pauseAutoRefresh() { if(state.refreshInterval) clearInterval(state.refreshInterval); state.refreshInterval = null; }
-      resumeAutoRefresh() { if(!state.refreshInterval) this.setupAutoRefresh(); }
+      pauseAutoRefresh() { if (state.refreshInterval) clearInterval(state.refreshInterval); state.refreshInterval = null; }
+      resumeAutoRefresh() { if (!state.refreshInterval) this.setupAutoRefresh(); }
 
       switchAsset(asset) { if (state.setAsset(asset)) this.renderDashboard(); }
       
-      // --- Live API Data Fetching Logic ---
       async _fetchJson(url) {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const data = await response.json();
-        // Handle CORS proxy structure
-        if (data.contents) return JSON.parse(data.contents);
-        return data;
+        return data.contents ? JSON.parse(data.contents) : data;
       }
 
       async _loadBackupData(asset) {
         console.warn(`Falling back to CoinGecko for ${asset}`);
         const config = state.assetConfigs[asset];
         if (!config.backupUrl) throw new Error("No backup URL configured.");
-        
         const data = await this._fetchJson(config.backupUrl);
-        return data.prices.map(item => ({
-            date: new Date(item[0]),
-            price: parseFloat(item[1]),
-            indicatorPrice: parseFloat(item[1])
-        }));
+        return data.prices.map(item => ({ date: new Date(item[0]), price: parseFloat(item[1]), indicatorPrice: parseFloat(item[1]) }));
       }
 
       async _loadTQQQData(proxy) {
         const tqqqUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/TQQQ?timeseries=90&apikey=${state.apiKey}`;
         const qqqUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/QQQ?timeseries=90&apikey=${state.apiKey}`;
-
         const [tqqqData, qqqData] = await Promise.all([
           this._fetchJson(proxy + encodeURIComponent(tqqqUrl)),
           this._fetchJson(proxy + encodeURIComponent(qqqUrl))
         ]);
-
         const qqqMap = new Map(qqqData.historical.map(item => [item.date, item.close]));
-
-        return tqqqData.historical
-          .map(item => {
-            const qqqPrice = qqqMap.get(item.date);
-            if (!qqqPrice) return null;
-            return {
-              date: new Date(item.date),
-              price: parseFloat(item.close),
-              indicatorPrice: parseFloat(qqqPrice),
-              secondaryPrice: parseFloat(qqqPrice)
-            };
-          })
-          .filter(Boolean)
-          .reverse();
+        return tqqqData.historical.map(item => {
+          const qqqPrice = qqqMap.get(item.date);
+          if (!qqqPrice) return null;
+          return { date: new Date(item.date), price: parseFloat(item.close), indicatorPrice: parseFloat(qqqPrice), secondaryPrice: parseFloat(qqqPrice) };
+        }).filter(Boolean).reverse();
       }
 
       async loadAssetData(asset) {
         const config = state.assetConfigs[asset];
         const corsProxy = 'https://api.allorigins.win/get?url=';
-        
         try {
-          if (asset === 'TQQQ') {
-            return await this._loadTQQQData(corsProxy);
-          }
-          
+          if (asset === 'TQQQ') return await this._loadTQQQData(corsProxy);
           const apiUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${config.apiSymbol}?timeseries=90&apikey=${state.apiKey}`;
           const data = await this._fetchJson(corsProxy + encodeURIComponent(apiUrl));
-          
-          if (!data.historical || data.historical.length === 0) {
-              throw new Error("Primary API returned no historical data.");
-          }
-
-          return data.historical
-            .map(item => ({
-              date: new Date(item.date),
-              price: parseFloat(item.close),
-              indicatorPrice: parseFloat(item.close)
-            }))
-            .reverse();
-
+          if (!data.historical || data.historical.length === 0) throw new Error("Primary API returned no historical data.");
+          return data.historical.map(item => ({ date: new Date(item.date), price: parseFloat(item.close), indicatorPrice: parseFloat(item.close) })).reverse();
         } catch (err) {
           console.error(`Primary API failed for ${asset}:`, err);
           return await this._loadBackupData(asset);
@@ -316,15 +349,13 @@
         try {
           const rawData = await this.loadAssetData(state.currentAsset);
           if (rawData.length < 20) throw new Error(`数据不足以分析: 需要至少20天数据，实际获取${rawData.length}天`);
-
-          const dataWithMA = technicalAnalysis.calculateIndicators(rawData);
-          const dataWithSignals = technicalAnalysis.generateSignals(dataWithMA);
-          const latest = dataWithSignals[dataWithSignals.length-1], prev = dataWithSignals[dataWithSignals.length-2];
+          const dataWithSignals = technicalAnalysis.generateSignals(technicalAnalysis.calculateIndicators(rawData));
+          const latest = dataWithSignals[dataWithSignals.length - 1], prev = dataWithSignals[dataWithSignals.length - 2];
           const priceChange = prev ? (latest.price - prev.price) / prev.price * 100 : 0;
           const config = state.assetConfigs[state.currentAsset];
           const gradientStyle = `background:linear-gradient(120deg,${config.gradientColors[0]} 20%,${config.gradientColors[1]} 50%,${config.gradientColors[2]} 90%);`;
 
-          root.innerHTML = `<div class="fade-in">${ui.renderAssetTabs()}<div class="black-gold-card rounded-3xl p-4 md:p-8 mb-6"><div class="text-center mb-10"><h1 class="text-4xl md:text-5xl font-extrabold mb-4 flex items-center justify-center tracking-wider dynamic-gradient-text" style="${gradientStyle}"><span class="text-5xl md:text-6xl mr-4 opacity-80">${config.symbol}</span> ${state.currentAsset} Unispark 量化 <div class="status-indicator-glow relative ml-4 mt-1"><div class="w-3 h-3 rounded-full" style="background-color:${config.color}"></div></div></h1><p class="text-gray-400 text-base md:text-lg">${config.description} | 基于20日均线分析</p>${state.currentAsset==='TQQQ'?`<p class="text-amber-400 text-sm mt-2 bg-amber-900 bg-opacity-30 px-3 py-1 rounded-full inline-block">⚠️ 交易标的: TQQQ | 指标基准: QQQ</p>`:''}</div><div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">${ui.renderMetricCard('🎯 交易建议',latest.POSITION,'综合技术指标研判',latest.POSITION==='持有'?'🟢':'🔴',latest.POSITION==='持有'?'#22c55e':'#ef4444')} ${ui.renderMetricCard(`💰 ${state.currentAsset}价格`,`$${utils.formatNumber(latest.price)}`,`24h: ${utils.formatPercentage(priceChange)} ${config.showSecondary?`| QQQ: $${utils.formatNumber(latest.secondaryPrice)}`:''}`,'💎',config.color)} ${ui.renderMetricCard('📈 20日均线',`$${utils.formatNumber(latest.MA20)}`,`趋势: ${latest.MAtrend} | ${latest.indicatorPrice>latest.MA20?'高于均线':'低于均线'}`,latest.MAtrend==='上升'?'🚀':'📉','#E0E0E0')} ${ui.renderMetricCard('📊 信号统计',`${dataWithSignals.filter(r=>r.Signal).length}`,`买入: ${dataWithSignals.filter(r=>r.Signal==='买入').length} | 卖出: ${dataWithSignals.filter(r=>r.Signal==='卖出').length}`,'🔔','#a78bfa')}</div><div class="grid lg:grid-cols-5 gap-4 md:gap-6 mb-8"><div class="lg:col-span-3 black-gold-card rounded-2xl p-4 md:p-6"><h2 class="text-xl font-semibold text-gray-200 mb-4 flex items-center"><span class="mr-3" style="color:${config.color}">📈</span>价格走势与信号</h2><div class="bg-black bg-opacity-25 rounded-xl p-2 md:p-4"><canvas id="chart" height="280"></canvas></div></div><div class="lg:col-span-2 black-gold-card rounded-2xl p-4 md:p-6"><h2 class="text-xl font-semibold text-gray-200 mb-4 flex items-center"><span class="mr-3" style="color:${config.color}">🔍</span>最近交易信号</h2><div class="space-y-3 max-h-[280px] overflow-y-auto pr-2">${ui.renderSignalList(dataWithSignals.filter(r=>r.Signal).slice(-5).reverse())}</div></div></div><div class="text-center mt-8 pt-6 border-t border-gray-700 border-opacity-50"><p class="text-gray-500 text-sm mb-2">⚠️ 本分析仅供参考，投资有风险，决策需谨慎。</p><p class="text-gray-600 text-xs">数据来源: financialmodelingprep.com & coingecko.com | 最后更新: ${new Date().toLocaleString('zh-CN')}</p></div></div></div>`;
+          root.innerHTML = `<div class="fade-in">${ui.renderAssetTabs()}<div class="black-gold-card rounded-3xl p-4 md:p-8 mb-6"><div class="text-center mb-10"><h1 class="text-4xl md:text-5xl font-extrabold mb-4 flex items-center justify-center tracking-wider dynamic-gradient-text" style="${gradientStyle}"><span class="text-5xl md:text-6xl mr-4 opacity-80">${config.symbol}</span> ${state.currentAsset} Unispark 量化 <div class="status-indicator-glow relative ml-4 mt-1"><div class="w-3 h-3 rounded-full" style="background-color:${config.color}"></div></div></h1><p class="text-gray-400 text-base md:text-lg">${config.description} | 基于20日均线分析</p>${state.currentAsset === 'TQQQ' ? `<p class="text-amber-400 text-sm mt-2 bg-amber-900 bg-opacity-30 px-3 py-1 rounded-full inline-block">⚠️ 交易标的: TQQQ | 指标基准: QQQ</p>` : ''}</div><div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">${ui.renderMetricCard('🎯 交易建议', latest.POSITION, '综合技术指标研判', latest.POSITION === '持有' ? '🟢' : '🔴', latest.POSITION === '持有' ? '#22c55e' : '#ef4444')} ${ui.renderMetricCard(`💰 ${state.currentAsset}价格`, `$${utils.formatNumber(latest.price)}`, `24h: ${utils.formatPercentage(priceChange)} ${config.showSecondary ? `| QQQ: $${utils.formatNumber(latest.secondaryPrice)}` : ''}`, '💎', config.color)} ${ui.renderMetricCard('📈 20日均线', `$${utils.formatNumber(latest.MA20)}`, `趋势: ${latest.MAtrend} | ${latest.indicatorPrice > latest.MA20 ? '高于均线' : '低于均线'}`, latest.MAtrend === '上升' ? '🚀' : '📉', '#E0E0E0')} ${ui.renderMetricCard('📊 信号统计', `${dataWithSignals.filter(r => r.Signal).length}`, `买入: ${dataWithSignals.filter(r => r.Signal === '买入').length} | 卖出: ${dataWithSignals.filter(r => r.Signal === '卖出').length}`, '🔔', '#a78bfa')}</div><div class="grid lg:grid-cols-5 gap-4 md:gap-6 mb-8"><div class="lg:col-span-3 black-gold-card rounded-2xl p-4 md:p-6"><h2 class="text-xl font-semibold text-gray-200 mb-4 flex items-center"><span class="mr-3" style="color:${config.color}">📈</span>价格走势与信号</h2><div class="bg-black bg-opacity-25 rounded-xl p-2 md:p-4"><canvas id="chart" height="280"></canvas></div></div><div class="lg:col-span-2 black-gold-card rounded-2xl p-4 md:p-6"><h2 class="text-xl font-semibold text-gray-200 mb-4 flex items-center"><span class="mr-3" style="color:${config.color}">🔍</span>最近交易信号</h2><div class="space-y-3 max-h-[280px] overflow-y-auto pr-2">${ui.renderSignalList(dataWithSignals.filter(r => r.Signal).slice(-5).reverse())}</div></div></div><div class="text-center mt-8 pt-6 border-t border-gray-700 border-opacity-50"><p class="text-gray-500 text-sm mb-2">⚠️ 本分析仅供参考，投资有风险，决策需谨慎。</p><p class="text-gray-600 text-xs">数据来源: financialmodelingprep.com & coingecko.com | 最后更新: ${new Date().toLocaleString('zh-CN')}</p></div></div></div>`;
           
           setTimeout(() => chartRenderer.render(dataWithSignals, config), 100);
           state.retryCount = 0;
@@ -345,7 +376,8 @@
     }
 
     let app;
-    document.addEventListener('DOMContentLoaded', () => { app = new QuantApp(); });
+    // **FIXED:** Use 'load' event to ensure Chart.js library is loaded before app runs.
+    window.addEventListener('load', () => { app = new QuantApp(); });
     window.addEventListener('beforeunload', () => { if (app) app.pauseAutoRefresh(); state.destroyChart(); });
 
   </script>
