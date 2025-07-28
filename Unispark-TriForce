@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unispark 量化交易平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0a0a0a;
+      background-image: radial-gradient(ellipse at center, rgba(38, 32, 20, 0.3) 0%, rgba(0,0,0,0) 70%), url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cdefs%3E%3Cstyle%3E.st0%7Bfill:%23FFD700;opacity:0;%7D%3C/style%3E%3C/defs%3E%3Cg%3E%3Ccircle class="st0" cx="50" cy="50" r="0.5"/%3E%3C/g%3E%3C/svg%3E');
+      background-size: auto, 100px 100px;
+      min-height: 100vh;
+      color: #E0E0E0;
+      overflow-x: hidden;
+    }
+
+    .black-gold-card {
+      background: rgba(10, 10, 10, 0.7);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(212, 175, 55, 0.1), 0 0 5px rgba(212, 175, 55, 0.1) inset;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    .black-gold-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255, 215, 0, 0.6);
+      box-shadow: 0 16px 40px 0 rgba(212, 175, 55, 0.2), 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .gold-gradient-text {
+      background: linear-gradient(120deg, #FFD700 20%, #F0E68C 50%, #B8860B 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-indicator-gold::before {
+      content: '';
+      position: absolute;
+      top: -3px; left: -3px; right: -3px; bottom: -3px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #FFD700, #B8860B);
+      z-index: -1;
+      animation: gold-glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes gold-glow {
+      from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.5); }
+      to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+    }
+    
+    .pulse-animation {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+    }
+    
+    .loading-spinner {
+      border-color: rgba(255, 215, 0, 0.3);
+      border-top-color: #FFD700;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .asset-tab {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .asset-tab.active {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(212, 175, 55, 0.1));
+      border-color: rgba(255, 215, 0, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .asset-tab:not(.active):hover {
+      background: rgba(255, 215, 0, 0.05);
+      border-color: rgba(255, 215, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="root" class="max-w-7xl mx-auto p-6"></div>
+
+  <script>
+    let currentAsset = 'BTC';
+    let chartInstance = null;
+
+    // Asset configurations
+    const assetConfigs = {
+      BTC: {
+        name: 'Bitcoin',
+        symbol: '₿',
+        apiSymbol: 'BTCUSD',
+        backupUrl: 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90&interval=daily',
+        color: '#FFD700',
+        gradientColors: ['#FFD700', '#F0E68C', '#B8860B'],
+        showSecondary: false
+      },
+      ETH: {
+        name: 'Ethereum',
+        symbol: 'Ξ',
+        apiSymbol: 'ETHUSD',
+        backupUrl: 'https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=90&interval=daily',
+        color: '#627EEA',
+        gradientColors: ['#627EEA', '#8FA8F5', '#4A69D6'],
+        showSecondary: false
+      },
+      TQQQ: {
+        name: 'ProShares UltraPro QQQ',
+        symbol: 'TQQQ',
+        apiSymbol: 'TQQQ',
+        indicatorSymbol: 'QQQ',
+        color: '#00D4AA',
+        gradientColors: ['#00D4AA', '#4DEBA8', '#00B894'],
+        showSecondary: true,
+        secondaryName: 'NASDAQ-100 (QQQ)'
+      }
+    };
+
+    // Parse URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Update URL without refreshing
+    function updateUrl(asset) {
+      const url = new URL(window.location);
+      url.searchParams.set('asset', asset);
+      window.history.pushState({}, '', url);
+    }
+
+    // Initialize from URL
+    function initializeFromUrl() {
+      const urlAsset = getUrlParameter('asset');
+      if (urlAsset && assetConfigs[urlAsset.toUpperCase()]) {
+        currentAsset = urlAsset.toUpperCase();
+      }
+    }
+
+    async function loadAssetData(asset) {
+      const config = assetConfigs[asset];
+      const corsProxy = 'https://api.allorigins.win/get?url=';
+      
+      try {
+        // For TQQQ, we need both TQQQ price data and QQQ indicator data
+        if (asset === 'TQQQ') {
+          return await loadTQQQData(corsProxy);
+        } else {
+          // For BTC and ETH
+          const apiUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/${config.apiSymbol}?timeseries=900&apikey=cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P`;
+          const proxyUrl = corsProxy + encodeURIComponent(apiUrl);
+          
+          const response = await fetch(proxyUrl);
+          if (!response.ok) throw new Error(`Proxy request failed: ${response.status}`);
+          
+          const proxyData = await response.json();
+          const data = JSON.parse(proxyData.contents);
+          const historical = data.historical || [];
+          
+          const processedData = historical
+            .map(item => ({ 
+              date: new Date(item.date), 
+              price: parseFloat(item.close),
+              indicatorPrice: parseFloat(item.close) // Same as price for BTC/ETH
+            }))
+            .filter(item => item.price != null && !isNaN(item.price))
+            .reverse();
+            
+          if (processedData.length === 0) {
+            console.warn("Processed historical data is empty.");
+            return await loadBackupData(asset);
+          }
+          
+          return processedData;
+        }
+      } catch (err) {
+        console.error(`Primary data source failed for ${asset}:`, err);
+        return await loadBackupData(asset);
+      }
+    }
+
+    async function loadTQQQData(corsProxy) {
+      try {
+        // Load both TQQQ and QQQ data
+        const tqqqUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/TQQQ?timeseries=900&apikey=cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P`;
+        const qqqUrl = `https://financialmodelingprep.com/api/v3/historical-price-full/QQQ?timeseries=900&apikey=cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P`;
+        
+        const [tqqqResponse, qqqResponse] = await Promise.all([
+          fetch(corsProxy + encodeURIComponent(tqqqUrl)),
+          fetch(corsProxy + encodeURIComponent(qqqUrl))
+        ]);
+
+        if (!tqqqResponse.ok || !qqqResponse.ok) {
+          throw new Error('Failed to fetch TQQQ or QQQ data');
+        }
+
+        const tqqqData = JSON.parse((await tqqqResponse.json()).contents);
+        const qqqData = JSON.parse((await qqqResponse.json()).contents);
+
+        const tqqqHistorical = tqqqData.historical || [];
+        const qqqHistorical = qqqData.historical || [];
+
+        // Create a map of QQQ prices by date
+        const qqqPriceMap = new Map();
+        qqqHistorical.forEach(item => {
+          qqqPriceMap.set(item.date, parseFloat(item.close));
+        });
+
+        // Combine TQQQ prices with QQQ indicator prices
+        const processedData = tqqqHistorical
+          .map(item => {
+            const date = new Date(item.date);
+            const tqqqPrice = parseFloat(item.close);
+            const qqqPrice = qqqPriceMap.get(item.date);
+            
+            return {
+              date: date,
+              price: tqqqPrice, // TQQQ price for display
+              indicatorPrice: qqqPrice || tqqqPrice, // QQQ price for calculations
+              secondaryPrice: qqqPrice // QQQ price for secondary display
+            };
+          })
+          .filter(item => item.price != null && !isNaN(item.price) && item.indicatorPrice != null && !isNaN(item.indicatorPrice))
+          .reverse();
+
+        return processedData;
+      } catch (err) {
+        console.error("TQQQ data loading failed:", err);
+        return generateMockTQQQData();
+      }
+    }
+
+    async function loadBackupData(asset) {
+      console.log(`Using backup data source for ${asset}`);
+      const config = assetConfigs[asset];
+      
+      if (asset === 'TQQQ') {
+        return generateMockTQQQData();
+      }
+      
+      try {
+        const response = await fetch(config.backupUrl);
+        if (!response.ok) throw new Error(`Backup API request failed: ${response.status}`);
+        
+        const data = await response.json();
+        const processedData = data.prices.map(([timestamp, price]) => ({
+          date: new Date(timestamp),
+          price: parseFloat(price),
+          indicatorPrice: parseFloat(price)
+        })).filter(item => item.price != null && !isNaN(item.price));
+        
+        return processedData;
+      } catch (err) {
+        console.error(`Backup data source also failed for ${asset}:`, err);
+        return asset === 'BTC' ? generateMockData(65000) : 
+               asset === 'ETH' ? generateMockData(3500) : generateMockTQQQData();
+      }
+    }
+
+    function generateMockData(basePrice) {
+      console.log("Generating mock data for demonstration");
+      const mockData = [];
+      const today = new Date();
+      for (let i = 89; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const trend = Math.sin(i * 0.1) * (basePrice * 0.1);
+        const noise = (Math.random() - 0.5) * (basePrice * 0.05);
+        const price = basePrice + trend + noise;
+        mockData.push({ 
+          date: date, 
+          price: Math.max(price, basePrice * 0.5),
+          indicatorPrice: Math.max(price, basePrice * 0.5)
+        });
+      }
+      return mockData;
+    }
+
+    function generateMockTQQQData() {
+      console.log("Generating mock TQQQ data for demonstration");
+      const mockData = [];
+      const baseTQQQPrice = 70;
+      const baseQQQPrice = 400;
+      const today = new Date();
+      
+      for (let i = 89; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const trend = Math.sin(i * 0.1) * 10;
+        const noise = (Math.random() - 0.5) * 5;
+        const qqqPrice = baseQQQPrice + trend + noise;
+        const tqqqPrice = baseTQQQPrice + (trend * 3) + (noise * 2); // 3x leverage effect
+        
+        mockData.push({ 
+          date: date, 
+          price: Math.max(tqqqPrice, 30),
+          indicatorPrice: Math.max(qqqPrice, 200),
+          secondaryPrice: Math.max(qqqPrice, 200)
+        });
+      }
+      return mockData;
+    }
+
+    function calculateIndicators(data) {
+      const dataWithMA = data.map((row, index, arr) => {
+        let MA20 = null;
+        if (index >= 19) {
+          // Use indicatorPrice for MA calculation (QQQ for TQQQ, same as price for BTC/ETH)
+          const prices = arr.slice(index - 19, index + 1).map(r => r.indicatorPrice);
+          if (prices.length === 20 && prices.every(p => typeof p === 'number' && !isNaN(p))) {
+            MA20 = prices.reduce((sum, p) => sum + p, 0) / 20;
+          }
+        }
+        return { ...row, MA20 };
+      });
+      
+      const dataWithIndicators = dataWithMA.map((row, index, arr) => {
+        let MAtrend = '未知';
+        if (row.MA20 != null && index > 0) {
+          const prevMA20 = arr[index - 1].MA20;
+          if (prevMA20 != null) {
+            MAtrend = row.MA20 > prevMA20 ? '上升' : '下降';
+          }
+        }
+        return { ...row, MAtrend };
+      });
+      
+      return dataWithIndicators;
+    }
+
+    function generateSignals(data) {
+      const dataWithSignals = data.reduce((accumulator, currentRow, index) => {
+        let signal = '';
+        const prevPosition = index > 0 ? accumulator[index - 1].POSITION : '空仓';
+        let currentPosition = prevPosition;
+
+        if (index >= 19 && currentRow.MA20 != null && currentRow.MAtrend !== '未知') {
+          // Use indicatorPrice for signal generation (QQQ for TQQQ)
+          const currentPrice = parseFloat(currentRow.indicatorPrice);
+          const currentMA = parseFloat(currentRow.MA20);
+          const currentTrend = currentRow.MAtrend;
+          
+          if (currentPrice && currentMA && currentTrend) {
+            const buyThreshold = currentMA * 1.01;
+            const sellThreshold = currentMA * 0.99;
+            
+            const condition1_buy = prevPosition === '空仓';
+            const condition2_buy = currentTrend === '上升';
+            const condition3_buy = currentPrice > buyThreshold;
+            
+            if (condition1_buy && condition2_buy && condition3_buy) {
+              signal = '买入';
+              currentPosition = '持有';
+            }
+            
+            const condition1_sell = prevPosition === '持有';
+            const condition2_sell = currentTrend === '下降';
+            const condition3_sell = currentPrice < sellThreshold;
+            
+            if (condition1_sell && condition2_sell && condition3_sell) {
+              signal = '卖出';
+              currentPosition = '空仓';
+            }
+          }
+        }
+        accumulator.push({ ...currentRow, Signal: signal, POSITION: currentPosition });
+        return accumulator;
+      }, []);
+      
+      return dataWithSignals;
+    }
+
+    function formatNumber(num) {
+      if (num == null || isNaN(num)) return 'N/A';
+      if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+      return num.toFixed(2);
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
+
+    function renderAssetTabs() {
+      return `
+        <div class="flex justify-center mb-8">
+          <div class="flex bg-gray-900 bg-opacity-50 rounded-2xl p-2 space-x-2">
+            ${Object.keys(assetConfigs).map(asset => {
+              const config = assetConfigs[asset];
+              const isActive = asset === currentAsset;
+              return `
+                <div class="asset-tab black-gold-card rounded-xl px-6 py-3 ${isActive ? 'active' : ''}" 
+                     onclick="switchAsset('${asset}')" 
+                     style="border-color: ${isActive ? config.color + '80' : 'rgba(212, 175, 55, 0.3)'}">
+                  <div class="flex items-center space-x-3">
+                    <span class="text-2xl">${config.symbol}</span>
+                    <div>
+                      <div class="font-semibold text-gray-200">${asset}</div>
+                      <div class="text-xs text-gray-400">${config.name}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function switchAsset(asset) {
+      if (currentAsset !== asset) {
+        currentAsset = asset;
+        updateUrl(asset);
+        renderDashboard();
+      }
+    }
+
+    async function renderDashboard() {
+      const root = document.getElementById('root');
+      const config = assetConfigs[currentAsset];
+      
+      // Show loading state
+      root.innerHTML = `
+        ${renderAssetTabs()}
+        <div class="black-gold-card rounded-3xl p-8 text-center bg-transparent">
+          <div class="loading-spinner w-16 h-16 border-4 rounded-full mx-auto mb-6"></div>
+          <h2 class="text-2xl font-bold text-gray-200 mb-2">正在加载 ${currentAsset} 量化数据...</h2>
+          <p class="text-gray-400">请稍候，正在连接至数据终端</p>
+        </div>
+      `;
+
+      const rawData = await loadAssetData(currentAsset);
+      if (rawData.length < 20) {
+        root.innerHTML = `
+          ${renderAssetTabs()}
+          <div class="black-gold-card rounded-3xl p-8 text-center">
+            <div class="text-6xl mb-4 text-amber-400">⚠️</div>
+            <h2 class="text-2xl font-bold text-gray-200 mb-4">数据不足</h2>
+            <p class="text-gray-400">无法加载足够数据进行分析。需要至少20天的数据，当前只有 ${rawData.length} 天。</p>
+          </div>
+        `;
+        return;
+      }
+
+      const dataWithMA = calculateIndicators(rawData);
+      const dataWithSignals = generateSignals(dataWithMA);
+
+      const latest = dataWithSignals[dataWithSignals.length - 1] || {};
+      const currentPosition = latest.POSITION || '未知';
+      const latestPrice = latest.price || 0;
+      const latestSecondaryPrice = latest.secondaryPrice || 0;
+      const latestChange = dataWithSignals.length > 1 && dataWithSignals[dataWithSignals.length - 2].price !== 0
+        ? ((latestPrice - dataWithSignals[dataWithSignals.length - 2].price) / dataWithSignals[dataWithSignals.length - 2].price * 100).toFixed(2) : 'N/A';
+      const latest20MA = latest.MA20;
+      const latestTrend = latest.MAtrend || '未知';
+      const pricePosition = (latest.indicatorPrice != null && latest20MA != null && latest20MA !== 0) 
+        ? (latest.indicatorPrice > latest20MA ? '高于20日均线' : '低于20日均线') : '未知';
+      const recentSignals = dataWithSignals.filter(r => r.Signal && r.Signal !== '').slice(-5).reverse();
+      const totalSignals = dataWithSignals.filter(r => r.Signal && r.Signal !== '').length;
+      const buySignals = dataWithSignals.filter(r => r.Signal === '买入').length;
+      const sellSignals = dataWithSignals.filter(r => r.Signal === '卖出').length;
+
+      // Generate gradient CSS for current asset
+      const gradientText = `background: linear-gradient(120deg, ${config.gradientColors[0]} 20%, ${config.gradientColors[1]} 50%, ${config.gradientColors[2]} 90%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;`;
+
+      root.innerHTML = `
+        ${renderAssetTabs()}
+        <div class="black-gold-card rounded-3xl p-6 md:p-8 mb-6">
+          <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 flex items-center justify-center tracking-wider" style="${gradientText}">
+              <span class="text-5xl md:text-6xl mr-4 opacity-80">${config.symbol}</span>
+              ${currentAsset} Unispark 量化
+              <div class="status-indicator-gold relative ml-4 mt-1">
+                <div class="w-3 h-3 rounded-full pulse-animation" style="background-color: ${config.color}"></div>
+              </div>
+            </h1>
+            <p class="text-gray-400 text-lg">基于20日均线的专业级交易信号分析</p>
+            ${currentAsset === 'TQQQ' ? '<p class="text-gray-500 text-sm mt-2">⚠️ 交易标的：TQQQ | 指标基准：QQQ</p>' : ''}
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="black-gold-card rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-300">🎯 交易建议</h2>
+                <div class="w-3.5 h-3.5 ${currentPosition === '持有' ? 'bg-green-400' : 'bg-red-500'} rounded-full pulse-animation"></div>
+              </div>
+              <p class="text-3xl font-bold ${currentPosition === '持有' ? 'text-green-400' : 'text-red-500'} mb-2">${currentPosition}</p>
+              <p class="text-gray-500 text-sm">综合技术指标研判</p>
+            </div>
+            
+            <div class="black-gold-card rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-300">💰 ${currentAsset}价格</h2>
+                <span class="text-2xl" style="color: ${config.color}">💎</span>
+              </div>
+              <p class="text-3xl font-bold mb-2" style="color: ${config.color}">$${formatNumber(latestPrice)}</p>
+              <p class="text-gray-400 text-sm flex items-center">
+                <span class="mr-2">${latestChange >= 0 ? '📈' : '📉'}</span>24h: ${latestChange}%
+              </p>
+              ${config.showSecondary ? `<p class="text-gray-500 text-xs mt-1">QQQ: $${formatNumber(latestSecondaryPrice)}</p>` : ''}
+            </div>
+            
+            <div class="black-gold-card rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-300">📈 20日均线</h2>
+                <span class="text-2xl">${latestTrend === '上升' ? '🚀' : '📉'}</span>
+              </div>
+              <p class="text-2xl font-bold text-gray-200 mb-2">$${formatNumber(latest20MA)}</p>
+              <p class="text-gray-400 text-sm">趋势: ${latestTrend}</p>
+              <p class="text-gray-500 text-xs">${pricePosition}</p>
+              ${currentAsset === 'TQQQ' ? '<p class="text-gray-600 text-xs">基于QQQ数据</p>' : ''}
+            </div>
+            
+            <div class="black-gold-card rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-300">📊 信号统计</h2>
+                <span class="text-2xl" style="color: ${config.color}">🔔</span>
+              </div>
+              <p class="text-gray-400 text-sm mb-1">总信号: <span class="font-bold text-gray-200">${totalSignals}</span></p>
+              <p class="text-green-400 text-sm mb-1">买入: <span class="font-bold">${buySignals}</span></p>
+              <p class="text-red-500 text-sm">卖出: <span class="font-bold">${sellSignals}</span></p>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-5 gap-6 mb-8">
+            <div class="md:col-span-3 black-gold-card rounded-2xl p-6">
+              <h2 class="text-xl font-semibold text-gray-200 mb-6 flex items-center">
+                <span class="mr-3" style="color: ${config.color}">📈</span>价格走势图
+              </h2>
+              <div class="bg-black bg-opacity-20 rounded-xl p-4">
+                <canvas id="chart" height="120"></canvas>
+              </div>
+            </div>
+            
+            <div class="md:col-span-2 black-gold-card rounded-2xl p-6">
+              <h2 class="text-xl font-semibold text-gray-200 mb-6 flex items-center">
+                <span class="mr-3" style="color: ${config.color}">🔍</span>最近交易信号
+              </h2>
+              <div class="space-y-3">
+                ${recentSignals.length > 0 ? recentSignals.map(s => `
+                  <div class="bg-gray-900 bg-opacity-50 rounded-xl p-3 flex justify-between items-center border border-gray-700 hover:border-amber-500 transition-colors duration-300">
+                    <span class="text-gray-400">${formatDate(s.date)}</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${s.Signal === '买入' ? 'bg-green-500 bg-opacity-20 text-green-300' : 'bg-red-500 bg-opacity-20 text-red-300'}">${s.Signal}</span>
+                    <span class="font-mono text-gray-200 font-bold">$${formatNumber(s.price)}</span>
+                  </div>
+                `).join('') : '<div class="text-gray-500 text-center py-8">暂无近期交易信号</div>'}
+              </div>
