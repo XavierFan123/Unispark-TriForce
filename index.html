@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Unispark 量化交易平台 - 专业级加密货币与股票量化分析</title>
   <meta name="description" content="基于20日均线的专业量化交易平台，支持BTC、ETH、TQQQ实时分析与交易信号">
-  <meta name="keywords" content="量化交易,BTC,ETH,TQQQ,技术分析,交易信号,加密货币">
+  <meta name="keywords" content="量化交易, BTC, ETH, TQQQ, 技术分析, 交易信号, 加密货币, 玻璃态, Glassmorphism">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E₿%3C/text%3E%3C/svg%3E">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
   
@@ -15,271 +16,107 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <style>
-    /* @import url('...') 已被移除 */
-    
-    :root {
-      --primary-gold: #FFD700;
-      --secondary-gold: #F0E68C;
-      --dark-gold: #B8860B;
-      --eth-blue: #627EEA;
-      --tqqq-green: #00D4AA;
-      --bg-primary: #0a0a0a;
-      --bg-secondary: rgba(10, 10, 10, 0.7);
-      --text-primary: #E0E0E0;
-      --text-secondary: #888;
-      --border-primary: rgba(212, 175, 55, 0.3);
-    }
-    
-    * {
-      box-sizing: border-box;
-    }
-    
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg-primary);
+      background-color: #0a0a0a;
       background-image: 
         radial-gradient(ellipse at top, rgba(38, 32, 20, 0.4) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom, rgba(20, 25, 35, 0.3) 0%, transparent 50%),
-        linear-gradient(135deg, rgba(255, 215, 0, 0.02) 0%, rgba(99, 126, 234, 0.02) 50%, rgba(0, 212, 170, 0.02) 100%);
+        radial-gradient(ellipse at bottom, rgba(20, 25, 35, 0.3) 0%, transparent 50%);
       min-height: 100vh;
-      color: var(--text-primary);
+      color: #E0E0E0;
       overflow-x: hidden;
-      font-feature-settings: 'kern' 1, 'liga' 1;
-      text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    .glass-card {
-      background: var(--bg-secondary);
+    .black-gold-card {
+      background: rgba(10, 10, 10, 0.7);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid var(--border-primary);
-      box-shadow: 
-        0 8px 32px rgba(212, 175, 55, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-        0 2px 16px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 8px 32px rgba(212, 175, 55, 0.1);
       transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-      position: relative;
-      overflow: hidden;
     }
     
-    .glass-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .glass-card:hover {
-      transform: translateY(-8px) scale(1.01);
+    .black-gold-card:hover {
+      transform: translateY(-8px);
       border-color: rgba(255, 215, 0, 0.6);
-      box-shadow: 
-        0 20px 60px rgba(212, 175, 55, 0.2),
-        0 0 0 1px rgba(255, 215, 0, 0.1) inset,
-        0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-    
-    .glass-card:hover::before {
-      opacity: 1;
+      box-shadow: 0 16px 40px rgba(212, 175, 55, 0.2);
     }
 
-    .gradient-text {
+    .dynamic-gradient-text {
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-size: 200% 200%;
-      animation: gradient-shift 3s ease-in-out infinite;
+      animation: gradient-shift 4s ease-in-out infinite;
     }
-    
+
     @keyframes gradient-shift {
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-
-    .status-indicator {
-      position: relative;
-      overflow: hidden;
-    }
     
-    .status-indicator::before {
+    .status-indicator-glow::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      top: -5px; left: -5px; right: -5px; bottom: -5px;
       border-radius: 50%;
       background: inherit;
-      animation: pulse-glow 2s ease-in-out infinite;
       z-index: -1;
+      animation: pulse-glow 2.5s ease-in-out infinite;
+      opacity: 0.5;
     }
 
     @keyframes pulse-glow {
-      0%, 100% { 
-        transform: scale(0.8);
-        opacity: 0.3;
-      }
-      50% { 
-        transform: scale(1.2);
-        opacity: 0.1;
-      }
+      0%, 100% { transform: scale(0.8); opacity: 0.3; }
+      50% { transform: scale(1.4); opacity: 0.1; }
     }
-    
+
     .loading-spinner {
-      width: 60px;
-      height: 60px;
-      border: 3px solid rgba(255, 215, 0, 0.1);
+      border: 4px solid rgba(255, 215, 0, 0.2);
+      border-top-color: #FFD700;
       border-radius: 50%;
-      border-top-color: var(--primary-gold);
       animation: spin 1s linear infinite;
-      position: relative;
-    }
-    
-    .loading-spinner::after {
-      content: '';
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      width: 44px;
-      height: 44px;
-      border: 2px solid transparent;
-      border-radius: 50%;
-      border-top-color: rgba(255, 215, 0, 0.3);
-      animation: spin 2s linear infinite reverse;
     }
     
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
 
     .asset-tab {
-      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      transition: all 0.3s ease;
       cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .asset-tab::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-gold), var(--secondary-gold));
-      transition: width 0.3s ease;
-    }
-
-    .asset-tab.active::after {
-      width: 100%;
     }
 
     .asset-tab.active {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(212, 175, 55, 0.1));
+      border-color: rgba(255, 215, 0, 0.6) !important;
       transform: translateY(-4px);
-      box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+      box-shadow: 0 8px 25px rgba(255, 215, 0, 0.15);
     }
 
     .asset-tab:not(.active):hover {
-      transform: translateY(-2px);
       background: rgba(255, 215, 0, 0.08);
-      border-color: rgba(255, 215, 0, 0.4);
+      border-color: rgba(255, 215, 0, 0.4) !important;
+      transform: translateY(-2px);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.8s ease-out forwards;
     }
     
-    .metric-card {
-      position: relative;
-      overflow: hidden;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    
-    .metric-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
-      transition: left 0.5s ease;
-    }
-    
-    .metric-card:hover::before {
-      left: 100%;
-    }
-    
-    .chart-container {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 16px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-    }
-    
-    .signal-item {
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .signal-item::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 3px;
-      height: 100%;
-      background: linear-gradient(180deg, var(--primary-gold), transparent);
-      transform: scaleY(0);
-      transition: transform 0.3s ease;
-    }
-    
-    .signal-item:hover::before {
-      transform: scaleY(1);
-    }
-    
-    .signal-item:hover {
-      transform: translateX(8px);
-      background: rgba(255, 255, 255, 0.05);
-    }
-    
-    .performance-indicator {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .performance-positive {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(21, 128, 61, 0.1));
-      color: #10b981;
-      border-color: rgba(34, 197, 94, 0.3);
-    }
-    
-    .performance-negative {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.1));
-      color: #ef4444;
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-    
-    .tooltip {
-      position: relative;
-      cursor: help;
-    }
-    
+
+    /* Accessibility tooltip styles from advanced version */
+    .tooltip { position: relative; cursor: help; }
     .tooltip::after {
       content: attr(data-tooltip);
       position: absolute;
-      bottom: 100%;
+      bottom: 120%;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.9);
@@ -290,28 +127,11 @@
       white-space: nowrap;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.3s ease, bottom 0.3s ease;
       z-index: 1000;
     }
-    
-    .tooltip:hover::after {
-      opacity: 1;
-    }
-    
-    @media (max-width: 768px) {
-      .asset-tab {
-        padding: 12px 16px;
-      }
-      
-      .glass-card {
-        padding: 16px;
-      }
-      
-      .chart-container {
-        padding: 12px;
-      }
-    }
-    
+    .tooltip:hover::after { opacity: 1; bottom: 105%; }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -319,43 +139,13 @@
         transition-duration: 0.01ms !important;
       }
     }
-    
-    .fade-in {
-      animation: fadeIn 0.6s ease-out forwards;
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .slide-up {
-      animation: slideUp 0.8s ease-out forwards;
-    }
-    
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(40px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
   </style>
 </head>
 <body>
 
   <div id="root" class="max-w-7xl mx-auto p-4 md:p-6">
-    <div class="glass-card rounded-3xl p-8 text-center">
-      <div class="loading-spinner mx-auto mb-6"></div>
+    <div class="black-gold-card rounded-3xl p-8 text-center">
+      <div class="loading-spinner w-16 h-16 mx-auto mb-6"></div>
       <h2 class="text-2xl font-bold text-gray-200 mb-2">正在初始化量化系统...</h2>
       <p class="text-gray-400">请稍候，系统正在加载核心模块</p>
     </div>
@@ -364,7 +154,8 @@
   <script>
     'use strict';
     
-    // Global state management
+    // --- Centralized State Management & Modular Architecture ---
+    
     class QuantState {
       constructor() {
         this.currentAsset = 'BTC';
@@ -397,390 +188,109 @@
         }
       }
       
-      // Asset configurations with enhanced metadata
       assetConfigs = {
-        BTC: {
-          name: 'Bitcoin',
-          fullName: '比特币',
-          symbol: '₿',
-          apiSymbol: 'BTCUSD',
-          color: '#FFD700',
-          gradientColors: ['#FFD700', '#F0E68C', '#B8860B'],
-          showSecondary: false,
-          category: 'cryptocurrency',
-          volatility: 'high',
-          marketCap: 'large',
-          description: '全球最大的加密货币'
-        },
-        ETH: {
-          name: 'Ethereum',
-          fullName: '以太坊',
-          symbol: 'Ξ',
-          apiSymbol: 'ETHUSD',
-          color: '#627EEA',
-          gradientColors: ['#627EEA', '#8FA8F5', '#4A69D6'],
-          showSecondary: false,
-          category: 'cryptocurrency',
-          volatility: 'high',
-          marketCap: 'large',
-          description: '智能合约平台龙头'
-        },
-        TQQQ: {
-          name: 'ProShares UltraPro QQQ',
-          fullName: '纳斯达克三倍做多ETF',
-          symbol: 'TQQQ',
-          apiSymbol: 'TQQQ',
-          indicatorSymbol: 'QQQ',
-          color: '#00D4AA',
-          gradientColors: ['#00D4AA', '#4DEBA8', '#00B894'],
-          showSecondary: true,
-          secondaryName: 'NASDAQ-100 (QQQ)',
-          category: 'etf',
-          volatility: 'very_high',
-          leverage: '3x',
-          description: '纳斯达克指数三倍杠杆ETF'
-        }
+        BTC: { name: 'Bitcoin', symbol: '₿', apiSymbol: 'BTCUSD', color: '#FFD700', gradientColors: ['#FFD700', '#F0E68C', '#B8860B'], showSecondary: false, description: '全球最大的加密货币', basePrice: 65000 },
+        ETH: { name: 'Ethereum', symbol: 'Ξ', apiSymbol: 'ETHUSD', color: '#627EEA', gradientColors: ['#627EEA', '#8FA8F5', '#4A69D6'], showSecondary: false, description: '智能合约平台龙头', basePrice: 3500 },
+        TQQQ: { name: 'ProShares UltraPro QQQ', symbol: 'TQQQ', apiSymbol: 'TQQQ', indicatorSymbol: 'QQQ', color: '#00D4AA', gradientColors: ['#00D4AA', '#4DEBA8', '#00B894'], showSecondary: true, secondaryName: 'NASDAQ-100 (QQQ)', description: '纳斯达克指数三倍杠杆ETF' }
       };
     }
 
     const state = new QuantState();
 
-    // Utility functions with error handling
     const utils = {
-      getUrlParameter(name) {
-        try {
-          const urlParams = new URLSearchParams(window.location.search);
-          return urlParams.get(name);
-        } catch (error) {
-          console.error('Error parsing URL parameters:', error);
-          return null;
-        }
-      },
-
       formatNumber(num, precision = 2) {
         if (num == null || isNaN(num)) return 'N/A';
-        
         const absNum = Math.abs(num);
         if (absNum >= 1e9) return (num / 1e9).toFixed(precision) + 'B';
         if (absNum >= 1e6) return (num / 1e6).toFixed(precision) + 'M';
         if (absNum >= 1e3) return (num / 1e3).toFixed(precision) + 'K';
-        
         return num.toFixed(precision);
       },
-
-      formatDate(date, options = {}) {
-        try {
-          const defaultOptions = { 
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit',
-            ...options
-          };
-          return date.toLocaleDateString('zh-CN', defaultOptions);
-        } catch (error) {
-          console.error('Error formatting date:', error);
-          return 'Invalid Date';
-        }
-      },
-
-      formatPercentage(value, showSign = true) {
+      formatDate(date) { return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }); },
+      formatPercentage(value) {
         if (value == null || isNaN(value)) return 'N/A';
-        const sign = showSign && value > 0 ? '+' : '';
+        const sign = value > 0 ? '+' : '';
         return `${sign}${value.toFixed(2)}%`;
       },
-
-      debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-          const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-          };
-          clearTimeout(timeout);
-          timeout = setTimeout(later, wait);
-        };
-      },
-
-      throttle(func, limit) {
-        let inThrottle;
-        return function() {
-          const args = arguments;
-          const context = this;
-          if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-          }
-        };
-      }
     };
 
-    // Enhanced data generators with more realistic patterns
     const dataGenerators = {
       generateMockData(basePrice, asset) {
-        console.log(`Generating enhanced mock data for ${asset}`);
         const mockData = [];
         const today = new Date();
-        const volatilityMap = { BTC: 0.08, ETH: 0.10, TQQQ: 0.15 };
-        const volatility = volatilityMap[asset] || 0.08;
-        
-        let currentPrice = basePrice;
-        
+        const volatility = asset === 'ETH' ? 0.08 : 0.05;
         for (let i = 89; i >= 0; i--) {
           const date = new Date(today);
           date.setDate(date.getDate() - i);
-          
-          // Market cycle simulation
-          const marketCycle = Math.sin(i * 0.05) * 0.3;
-          const weeklyTrend = Math.sin(i * 0.02) * 0.2;
-          const randomWalk = (Math.random() - 0.5) * volatility;
-          
-          // Weekend effect (lower volatility)
-          const dayOfWeek = date.getDay();
-          const weekendMultiplier = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.5 : 1;
-          
-          const priceChange = (marketCycle + weeklyTrend + randomWalk) * weekendMultiplier;
-          currentPrice *= (1 + priceChange);
-          currentPrice = Math.max(currentPrice, basePrice * 0.3); // Floor protection
-          
-          mockData.push({ 
-            date: date, 
-            price: currentPrice,
-            indicatorPrice: currentPrice,
-            volume: Math.random() * 1000000 + 500000,
-            marketCap: currentPrice * 19000000 // Approximate circulating supply
-          });
+          const trend = Math.sin(i * 0.1) * (basePrice * 0.15);
+          const noise = (Math.random() - 0.5) * (basePrice * volatility);
+          const price = basePrice + trend + noise;
+          mockData.push({ date: date, price: Math.max(price, basePrice * 0.5), indicatorPrice: Math.max(price, basePrice * 0.5) });
         }
-        
         return mockData;
       },
-
       generateMockTQQQData() {
-        console.log("Generating enhanced TQQQ mock data");
         const mockData = [];
-        const baseTQQQPrice = 70;
-        const baseQQQPrice = 400;
+        const baseTQQQ = 70, baseQQQ = 400;
         const today = new Date();
-        
-        let currentTQQQPrice = baseTQQQPrice;
-        let currentQQQPrice = baseQQQPrice;
-        
         for (let i = 89; i >= 0; i--) {
           const date = new Date(today);
           date.setDate(date.getDate() - i);
-          
-          // Market trends
-          const marketTrend = Math.sin(i * 0.03) * 0.15;
-          const volatility = (Math.random() - 0.5) * 0.08;
-          
-          // QQQ price movement
-          const qqqChange = marketTrend + volatility;
-          currentQQQPrice *= (1 + qqqChange);
-          currentQQQPrice = Math.max(currentQQQPrice, baseQQQPrice * 0.5);
-          
-          // TQQQ follows with 3x leverage
-          const tqqqChange = qqqChange * 3;
-          currentTQQQPrice *= (1 + tqqqChange);
-          currentTQQQPrice = Math.max(currentTQQQPrice, baseTQQQPrice * 0.2);
-          
-          mockData.push({ 
-            date: date, 
-            price: currentTQQQPrice,
-            indicatorPrice: currentQQQPrice,
-            secondaryPrice: currentQQQPrice,
-            volume: Math.random() * 50000000 + 10000000,
-            leverage: 3
-          });
+          const qqqTrend = Math.sin(i * 0.1) * 20 + (Math.random() - 0.5) * 15;
+          const qqqPrice = baseQQQ + qqqTrend;
+          const tqqqPrice = baseTQQQ + qqqTrend * 2.8; // Simulate leverage decay/effect
+          mockData.push({ date: date, price: Math.max(tqqqPrice, 30), indicatorPrice: Math.max(qqqPrice, 200), secondaryPrice: Math.max(qqqPrice, 200) });
         }
-        
         return mockData;
       }
     };
 
-    // Enhanced technical analysis
     const technicalAnalysis = {
       calculateIndicators(data) {
-        const dataWithMA = data.map((row, index, arr) => {
-          let MA20 = null;
-          let MA5 = null;
-          let MA50 = null;
-          
-          // 20-day MA
+        return data.map((row, index, arr) => {
+          let MA20 = null, MAtrend = '未知';
           if (index >= 19) {
             const prices = arr.slice(index - 19, index + 1).map(r => r.indicatorPrice);
-            if (prices.length === 20 && prices.every(p => typeof p === 'number' && !isNaN(p))) {
-              MA20 = prices.reduce((sum, p) => sum + p, 0) / 20;
+            if (prices.length === 20 && prices.every(p => typeof p === 'number')) {
+              MA20 = prices.reduce((a, b) => a + b, 0) / 20;
+              const prevMA20 = arr[index - 1].MA20;
+              if (prevMA20) MAtrend = MA20 > prevMA20 ? '上升' : '下降';
             }
           }
-          
-          // 5-day MA for short-term trend
-          if (index >= 4) {
-            const prices = arr.slice(index - 4, index + 1).map(r => r.indicatorPrice);
-            if (prices.length === 5 && prices.every(p => typeof p === 'number' && !isNaN(p))) {
-              MA5 = prices.reduce((sum, p) => sum + p, 0) / 5;
-            }
-          }
-          
-          // 50-day MA for long-term trend
-          if (index >= 49) {
-            const prices = arr.slice(index - 49, index + 1).map(r => r.indicatorPrice);
-            if (prices.length === 50 && prices.every(p => typeof p === 'number' && !isNaN(p))) {
-              MA50 = prices.reduce((sum, p) => sum + p, 0) / 50;
-            }
-          }
-          
-          return { ...row, MA20, MA5, MA50 };
+          return { ...row, MA20, MAtrend };
         });
-        
-        // Calculate trends and additional indicators
-        const dataWithIndicators = dataWithMA.map((row, index, arr) => {
-          let MAtrend = '未知';
-          let strength = 0;
-          let momentum = 0;
-          
-          if (row.MA20 != null && index > 0) {
-            const prevMA20 = arr[index - 1].MA20;
-            if (prevMA20 != null) {
-              MAtrend = row.MA20 > prevMA20 ? '上升' : '下降';
-              strength = Math.abs((row.MA20 - prevMA20) / prevMA20) * 100;
-            }
-          }
-          
-          // Price momentum (3-day change)
-          if (index >= 2) {
-            const pastPrice = arr[index - 2].indicatorPrice;
-            momentum = ((row.indicatorPrice - pastPrice) / pastPrice) * 100;
-          }
-          
-          // Volatility (5-day)
-          let volatility = 0;
-          if (index >= 4) {
-            const prices = arr.slice(index - 4, index + 1).map(r => r.indicatorPrice);
-            const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-            const variance = prices.reduce((sum, p) => sum + Math.pow(p - avgPrice, 2), 0) / prices.length;
-            volatility = Math.sqrt(variance) / avgPrice * 100;
-          }
-          
-          return { 
-            ...row, 
-            MAtrend, 
-            strength, 
-            momentum, 
-            volatility 
-          };
-        });
-        
-        return dataWithIndicators;
       },
-
       generateSignals(data) {
-        const dataWithSignals = data.reduce((accumulator, currentRow, index) => {
-          let signal = '';
-          let confidence = 0;
-          const prevPosition = index > 0 ? accumulator[index - 1].POSITION : '空仓';
-          let currentPosition = prevPosition;
-
-          if (index >= 19 && currentRow.MA20 != null && currentRow.MAtrend !== '未知') {
-            const currentPrice = parseFloat(currentRow.indicatorPrice);
-            const currentMA = parseFloat(currentRow.MA20);
-            const currentTrend = currentRow.MAtrend;
-            const momentum = currentRow.momentum || 0;
-            const strength = currentRow.strength || 0;
-            
-            if (currentPrice && currentMA && currentTrend) {
-              const buyThreshold = currentMA * 1.01;
-              const sellThreshold = currentMA * 0.99;
-              
-              // Enhanced buy conditions
-              const condition1_buy = prevPosition === '空仓';
-              const condition2_buy = currentTrend === '上升';
-              const condition3_buy = currentPrice > buyThreshold;
-              const condition4_buy = momentum > 1; // Positive momentum
-              
-              if (condition1_buy && condition2_buy && condition3_buy) {
-                signal = '买入';
-                currentPosition = '持有';
-                confidence = Math.min(90, 50 + strength * 2 + (momentum > 0 ? 20 : 0));
-              }
-              
-              // Enhanced sell conditions
-              const condition1_sell = prevPosition === '持有';
-              const condition2_sell = currentTrend === '下降';
-              const condition3_sell = currentPrice < sellThreshold;
-              const condition4_sell = momentum < -1; // Negative momentum
-              
-              if (condition1_sell && condition2_sell && condition3_sell) {
-                signal = '卖出';
-                currentPosition = '空仓';
-                confidence = Math.min(90, 50 + strength * 2 + (momentum < 0 ? 20 : 0));
-              }
-            }
+        return data.reduce((acc, row, i) => {
+          let signal = '', position = i > 0 ? acc[i - 1].POSITION : '空仓';
+          if (i >= 19 && row.MA20 != null && row.MAtrend !== '未知') {
+            const price = row.indicatorPrice, ma = row.MA20, trend = row.MAtrend;
+            if (position === '空仓' && trend === '上升' && price > ma * 1.01) { signal = '买入'; position = '持有'; }
+            if (position === '持有' && trend === '下降' && price < ma * 0.99) { signal = '卖出'; position = '空仓'; }
           }
-          
-          accumulator.push({ 
-            ...currentRow, 
-            Signal: signal, 
-            POSITION: currentPosition, 
-            confidence: Math.round(confidence) 
-          });
-          return accumulator;
+          acc.push({ ...row, Signal: signal, POSITION: position });
+          return acc;
         }, []);
-        
-        return dataWithSignals;
-      },
-
-      calculatePerformanceMetrics(data) {
-        const signals = data.filter(d => d.Signal && d.Signal !== '');
-        if (signals.length < 2) return null;
-        
-        let totalReturn = 0;
-        let winTrades = 0;
-        let lossTrades = 0;
-        let currentHolding = null;
-        
-        signals.forEach((signal, index) => {
-          if (signal.Signal === '买入') {
-            currentHolding = signal.price;
-          } else if (signal.Signal === '卖出' && currentHolding) {
-            const trade = (signal.price - currentHolding) / currentHolding;
-            totalReturn += trade;
-            if (trade > 0) winTrades++;
-            else lossTrades++;
-            currentHolding = null;
-          }
-        });
-        
-        const totalTrades = winTrades + lossTrades;
-        const winRate = totalTrades > 0 ? (winTrades / totalTrades) * 100 : 0;
-        
-        return {
-          totalReturn: totalReturn * 100,
-          winRate,
-          totalTrades,
-          winTrades,
-          lossTrades
-        };
       }
     };
 
-    // Enhanced UI components
     const ui = {
       renderAssetTabs() {
         return `
           <div class="flex justify-center mb-8">
-            <div class="flex bg-gray-900 bg-opacity-30 backdrop-filter backdrop-blur-xl rounded-2xl p-3 space-x-3 border border-gray-700">
+            <div class="flex bg-gray-900 bg-opacity-50 rounded-2xl p-2 space-x-2">
               ${Object.keys(state.assetConfigs).map(asset => {
                 const config = state.assetConfigs[asset];
                 const isActive = asset === state.currentAsset;
                 return `
-                  <div class="asset-tab glass-card rounded-xl px-6 py-4 ${isActive ? 'active' : ''}" 
-                       onclick="switchAsset('${asset}')" 
+                  <div class="asset-tab black-gold-card rounded-xl px-4 py-2 md:px-6 md:py-3 ${isActive ? 'active' : ''}" 
+                       onclick="app.switchAsset('${asset}')" 
                        style="border-color: ${isActive ? config.color + '80' : 'rgba(212, 175, 55, 0.3)'}">
                     <div class="flex items-center space-x-3">
-                      <span class="text-2xl">${config.symbol}</span>
+                      <span class="text-xl md:text-2xl">${config.symbol}</span>
                       <div>
-                        <div class="font-semibold text-gray-200">${asset}</div>
-                        <div class="text-xs text-gray-400">${config.fullName}</div>
+                        <div class="font-semibold text-gray-200 text-sm md:text-base">${asset}</div>
+                        <div class="hidden md:block text-xs text-gray-400">${config.name}</div>
                       </div>
                     </div>
                   </div>
@@ -790,547 +300,193 @@
           </div>
         `;
       },
-
-      renderLoadingState(message = '正在加载数据...') {
-        return `
-          ${this.renderAssetTabs()}
-          <div class="glass-card rounded-3xl p-8 text-center fade-in">
-            <div class="loading-spinner mx-auto mb-6"></div>
-            <h2 class="text-2xl font-bold text-gray-200 mb-2">${message}</h2>
-            <p class="text-gray-400">请稍候，正在处理 ${state.currentAsset} 数据</p>
-          </div>
-        `;
-      },
-
-      renderErrorState(error) {
-        return `
-          ${this.renderAssetTabs()}
-          <div class="glass-card rounded-3xl p-8 text-center fade-in">
-            <div class="text-6xl mb-4 text-red-400">⚠️</div>
-            <h2 class="text-2xl font-bold text-gray-200 mb-4">系统异常</h2>
-            <p class="text-gray-400 mb-4">${error || '数据加载失败，请稍后重试'}</p>
-            <button onclick="location.reload()" class="glass-card px-6 py-3 rounded-xl text-white hover:scale-105 transition-transform">
-              重新加载
-            </button>
-          </div>
-        `;
-      },
-
-      renderMetricCard(title, value, subtitle, icon, color, trend = null) {
-        const trendIndicator = trend ? `
-          <div class="flex items-center text-xs mt-1">
-            <span class="mr-1">${trend > 0 ? '📈' : trend < 0 ? '📉' : '➖'}</span>
-            <span class="${trend > 0 ? 'text-green-400' : trend < 0 ? 'text-red-400' : 'text-gray-400'}">
-              ${utils.formatPercentage(Math.abs(trend))}
-            </span>
-          </div>
-        ` : '';
-
-        return `
-          <div class="metric-card glass-card rounded-2xl p-6 slide-up">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold text-gray-300">${title}</h2>
-              <span class="text-2xl" style="color: ${color}">${icon}</span>
+      renderMetricCard(title, value, subtitle, icon, color, valueClass = '') {
+          return `
+            <div class="black-gold-card rounded-2xl p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h2 class="text-base font-semibold text-gray-300">${title}</h2>
+                <span class="text-2xl">${icon}</span>
+              </div>
+              <p class="text-2xl md:text-3xl font-bold mb-1 ${valueClass}" style="color: ${color};">${value}</p>
+              <p class="text-gray-500 text-xs md:text-sm">${subtitle}</p>
             </div>
-            <p class="text-3xl font-bold mb-2" style="color: ${color}">${value}</p>
-            <p class="text-gray-500 text-sm">${subtitle}</p>
-            ${trendIndicator}
-          </div>
-        `;
+          `;
       },
-
       renderSignalList(signals) {
-        if (!signals.length) {
-          return '<div class="text-gray-500 text-center py-8">暂无近期交易信号</div>';
-        }
-
+        if (!signals.length) return '<div class="text-gray-500 text-center py-8">暂无近期交易信号</div>';
         return signals.map(s => `
-          <div class="signal-item bg-gray-900 bg-opacity-50 rounded-xl p-4 border border-gray-700 hover:border-amber-500 transition-all duration-300">
-            <div class="flex justify-between items-center">
-              <div class="flex flex-col">
-                <span class="text-gray-400 text-sm">${utils.formatDate(s.date)}</span>
-                ${s.confidence ? `<span class="text-xs text-gray-500 mt-1">置信度: ${s.confidence}%</span>` : ''}
-              </div>
-              <div class="flex items-center space-x-3">
-                <span class="performance-indicator ${s.Signal === '买入' ? 'performance-positive' : 'performance-negative'}">
-                  ${s.Signal}
-                </span>
-                <span class="font-mono text-gray-200 font-bold">${utils.formatNumber(s.price)}</span>
-              </div>
-            </div>
+          <div class="bg-gray-900 bg-opacity-50 rounded-xl p-3 flex justify-between items-center border border-gray-700 hover:border-amber-500 transition-colors duration-300">
+            <span class="text-gray-400 text-sm">${utils.formatDate(s.date).substring(5)}</span>
+            <span class="px-3 py-1 rounded-full text-xs font-medium ${s.Signal === '买入' ? 'bg-green-500 bg-opacity-20 text-green-300' : 'bg-red-500 bg-opacity-20 text-red-300'}">${s.Signal}</span>
+            <span class="font-mono text-gray-200 font-bold">$${utils.formatNumber(s.price)}</span>
           </div>
         `).join('');
-      },
-
-      renderPerformancePanel(performance) {
-        if (!performance) return '';
-
-        return `
-          <div class="glass-card rounded-2xl p-6 slide-up">
-            <h2 class="text-xl font-semibold text-gray-200 mb-6 flex items-center">
-              <span class="mr-3 text-amber-400">📊</span>策略表现
-            </h2>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="text-center">
-                <div class="text-2xl font-bold ${performance.totalReturn >= 0 ? 'text-green-400' : 'text-red-400'}">
-                  ${utils.formatPercentage(performance.totalReturn)}
-                </div>
-                <div class="text-sm text-gray-400">累计收益</div>
-              </div>
-              <div class="text-center">
-                <div class="text-2xl font-bold text-blue-400">${performance.winRate.toFixed(1)}%</div>
-                <div class="text-sm text-gray-400">胜率</div>
-              </div>
-              <div class="text-center">
-                <div class="text-xl font-semibold text-gray-300">${performance.totalTrades}</div>
-                <div class="text-sm text-gray-400">总交易次数</div>
-              </div>
-              <div class="text-center">
-                <div class="text-xl font-semibold text-gray-300">${performance.winTrades}/${performance.lossTrades}</div>
-                <div class="text-sm text-gray-400">盈/亏次数</div>
-              </div>
-            </div>
-          </div>
-        `;
       }
     };
 
-    // Enhanced chart rendering
     const chartRenderer = {
-      render(dataWithSignals, config) {
+      render(data, config) {
         state.destroyChart();
-
         const ctx = document.getElementById('chart');
         if (!ctx) return;
         
-        const chartData = dataWithSignals.slice(-60);
-
+        const chartData = data.slice(-60);
         const datasets = [
-          {
-            label: `${state.currentAsset}价格`,
-            data: chartData.map(r => r.price),
-            borderColor: config.color,
-            backgroundColor: config.color + '15',
-            borderWidth: 3,
-            tension: 0.4,
-            fill: true,
-            pointRadius: 0,
-            pointHoverRadius: 6,
-            pointHitRadius: 10,
-            pointHoverBackgroundColor: config.color,
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 2,
-          },
-          {
-            label: '20日均线',
-            data: chartData.map(r => r.MA20),
-            borderColor: '#E0E0E0',
-            borderWidth: 2,
-            borderDash: [8, 4],
-            tension: 0.4,
-            fill: false,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-          },
-          {
-            label: '买入信号',
-            data: chartData.map(r => r.Signal === '买入' ? r.price : null),
-            pointStyle: 'triangle',
-            rotation: 0,
-            backgroundColor: '#22c55e',
-            borderColor: '#fff',
-            borderWidth: 2,
-            pointRadius: 10,
-            pointHoverRadius: 12,
-            showLine: false,
-          },
-          {
-            label: '卖出信号',
-            data: chartData.map(r => r.Signal === '卖出' ? r.price : null),
-            pointStyle: 'triangle',
-            rotation: 180,
-            backgroundColor: '#ef4444',
-            borderColor: '#fff',
-            borderWidth: 2,
-            pointRadius: 10,
-            pointHoverRadius: 12,
-            showLine: false,
-          }
+          { label: `${state.currentAsset}价格`, data: chartData.map(r => r.price), borderColor: config.color, backgroundColor: config.color + '20', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 5 },
+          { label: '20日均线', data: chartData.map(r => r.MA20), borderColor: '#E0E0E0', borderWidth: 1.5, borderDash: [5, 5], tension: 0.4, fill: false, pointRadius: 0 },
+          { label: '买入信号', data: chartData.map(r => r.Signal === '买入' ? r.price : null), pointStyle: 'triangle', rotation: 0, backgroundColor: '#28a745', borderColor: '#fff', borderWidth: 1, pointRadius: 8, pointHoverRadius: 10, showLine: false },
+          { label: '卖出信号', data: chartData.map(r => r.Signal === '卖出' ? r.price : null), pointStyle: 'triangle', rotation: 180, backgroundColor: '#dc3545', borderColor: '#fff', borderWidth: 1, pointRadius: 8, pointHoverRadius: 10, showLine: false }
         ];
 
-        // Add secondary price line for TQQQ
         if (state.currentAsset === 'TQQQ') {
-          datasets.splice(1, 0, {
-            label: 'QQQ价格',
-            data: chartData.map(r => r.secondaryPrice),
-            borderColor: '#9CA3AF',
-            backgroundColor: 'rgba(156, 163, 175, 0.1)',
-            borderWidth: 2,
-            tension: 0.4,
-            fill: false,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            yAxisID: 'y1',
-          });
+          datasets.splice(1, 0, { label: 'QQQ价格', data: chartData.map(r => r.secondaryPrice), borderColor: '#9CA3AF', borderWidth: 1.5, tension: 0.4, fill: false, pointRadius: 0, yAxisID: 'y1' });
         }
 
-        const chartOptions = {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-            intersect: false,
-          },
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                color: '#E0E0E0',
-                font: { size: 12, weight: '500' },
-                usePointStyle: true,
-                padding: 24,
-                boxWidth: 12,
-                boxHeight: 12,
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
-              titleColor: config.color,
-              bodyColor: '#E0E0E0',
-              borderColor: config.color + '80',
-              borderWidth: 1,
-              cornerRadius: 12,
-              padding: 16,
-              displayColors: true,
-              callbacks: {
-                title: (context) => utils.formatDate(new Date(chartData[context[0].dataIndex].date)),
-                label: (context) => {
-                  const value = context.parsed.y;
-                  if (value === null) return null;
-                  return `${context.dataset.label}: ${utils.formatNumber(value)}`;
-                },
-                afterBody: (context) => {
-                  const dataPoint = chartData[context[0].dataIndex];
-                  if (dataPoint.confidence) {
-                    return [`置信度: ${dataPoint.confidence}%`];
-                  }
-                  return [];
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: '#888',
-                font: { size: 11 },
-                maxRotation: 0,
-                minRotation: 0,
-                maxTicksLimit: 12,
-              },
-              grid: {
-                color: config.color + '08',
-                drawBorder: false,
-              }
-            },
-            y: {
-              position: 'right',
-              ticks: {
-                // **修正 2: 修复了这里的语法错误**
-                callback: v => utils.formatNumber(v),
-                color: '#888',
-                font: { size: 11 },
-                padding: 8,
-              },
-              grid: {
-                color: config.color + '12',
-                drawBorder: false,
-              }
-            }
-          },
-          elements: {
-            point: {
-              hoverBorderWidth: 3,
-            }
-          }
+        const options = {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: '#E0E0E0', font: { size: 12 }, usePointStyle: true, padding: 20 } }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.9)', titleColor: config.color, bodyColor: '#E0E0E0', borderColor: config.color + '80', borderWidth: 1, cornerRadius: 8, callbacks: { label: c => `${c.dataset.label}: $${utils.formatNumber(c.parsed.y)}` } } },
+          scales: { x: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: config.color + '10' } }, y: { position: 'right', ticks: { callback: v => '$' + utils.formatNumber(v), color: '#888', font: { size: 10 } }, grid: { color: config.color + '20', drawBorder: false } } },
+          interaction: { mode: 'nearest', axis: 'x', intersect: false }
         };
 
-        // Add secondary y-axis for TQQQ
-        if (state.currentAsset === 'TQQQ') {
-          chartOptions.scales.y1 = {
-            type: 'linear',
-            display: false,
-            position: 'left',
-          };
-        }
+        if (state.currentAsset === 'TQQQ') options.scales.y1 = { type: 'linear', display: false, position: 'left' };
 
-        state.chartInstance = new Chart(ctx.getContext('2d'), {
-          type: 'line',
-          data: {
-            labels: chartData.map(r => utils.formatDate(r.date).substring(5)),
-            datasets: datasets
-          },
-          options: chartOptions
-        });
+        state.chartInstance = new Chart(ctx.getContext('2d'), { type: 'line', data: { labels: chartData.map(r => utils.formatDate(r.date).substring(5)), datasets }, options });
       }
     };
-
-    // Main application logic
+    
+    // --- Main Application Logic ---
     class QuantApp {
-      constructor() {
-        this.init();
-      }
+      constructor() { this.init(); }
 
       init() {
         this.initializeFromUrl();
         this.setupEventListeners();
         this.renderDashboard();
-        this.setupAutoRefresh();
       }
 
       initializeFromUrl() {
-        const urlAsset = utils.getUrlParameter('asset');
+        const urlAsset = new URLSearchParams(window.location.search).get('asset');
         if (urlAsset && state.assetConfigs[urlAsset.toUpperCase()]) {
           state.currentAsset = urlAsset.toUpperCase();
         }
       }
 
       setupEventListeners() {
-        // Handle browser navigation
-        window.addEventListener('popstate', () => {
-          this.initializeFromUrl();
-          this.renderDashboard();
-        });
-
-        // Handle visibility change for performance
+        window.addEventListener('popstate', () => { this.initializeFromUrl(); this.renderDashboard(); });
         document.addEventListener('visibilitychange', () => {
-          if (document.hidden) {
-            this.pauseAutoRefresh();
-          } else {
-            this.resumeAutoRefresh();
-          }
-        });
-
-        // Handle network status
-        window.addEventListener('online', () => {
-          console.log('Network reconnected');
-          this.renderDashboard();
-        });
-
-        window.addEventListener('offline', () => {
-          console.log('Network disconnected');
+            if (document.hidden) this.pauseAutoRefresh();
+            else this.resumeAutoRefresh();
         });
       }
 
       setupAutoRefresh() {
-        // Clear existing interval
-        if (state.refreshInterval) {
-          clearInterval(state.refreshInterval);
-        }
-
-        // Set up new interval (5 minutes)
-        state.refreshInterval = setInterval(() => {
-          if (!document.hidden && !state.isLoading) {
-            this.renderDashboard();
-          }
-        }, 5 * 60 * 1000);
+        if (state.refreshInterval) clearInterval(state.refreshInterval);
+        state.refreshInterval = setInterval(() => { if (!document.hidden && !state.isLoading) this.renderDashboard(); }, 5 * 60 * 1000);
       }
+      pauseAutoRefresh() { if(state.refreshInterval) clearInterval(state.refreshInterval); state.refreshInterval = null; }
+      resumeAutoRefresh() { if(!state.refreshInterval) this.setupAutoRefresh(); }
 
-      pauseAutoRefresh() {
-        if (state.refreshInterval) {
-          clearInterval(state.refreshInterval);
-          state.refreshInterval = null;
-        }
-      }
-
-      resumeAutoRefresh() {
-        if (!state.refreshInterval) {
-          this.setupAutoRefresh();
-        }
-      }
+      switchAsset(asset) { if (state.setAsset(asset)) this.renderDashboard(); }
 
       async loadAssetData(asset) {
-        console.log(`Loading enhanced data for ${asset}`);
-        
-        // Simulate network delay for realism
-        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-        
-        if (asset === 'TQQQ') {
-          return dataGenerators.generateMockTQQQData();
-        } else if (asset === 'BTC') {
-          return dataGenerators.generateMockData(65000, asset);
-        } else if (asset === 'ETH') {
-          return dataGenerators.generateMockData(3500, asset);
-        }
-        
-        return dataGenerators.generateMockData(50000, asset);
+        await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 800)); // Simulate network latency
+        const config = state.assetConfigs[asset];
+        if (asset === 'TQQQ') return dataGenerators.generateMockTQQQData();
+        return dataGenerators.generateMockData(config.basePrice, asset);
       }
-
+      
+      // Main Render Function with Error Handling & Retry Logic
       async renderDashboard() {
         if (state.isLoading) return;
-        
         state.isLoading = true;
+        
         const root = document.getElementById('root');
         const config = state.assetConfigs[state.currentAsset];
         
-        try {
-          // Show loading state
-          root.innerHTML = ui.renderLoadingState();
+        root.innerHTML = `
+          ${ui.renderAssetTabs()}
+          <div class="black-gold-card rounded-3xl p-8 text-center fade-in">
+            <div class="loading-spinner w-12 h-12 mx-auto mb-6"></div>
+            <h2 class="text-xl font-bold text-gray-200 mb-2">正在加载 ${state.currentAsset} 量化数据...</h2>
+            <p class="text-gray-400 text-sm">连接至 Unispark 数据终端</p>
+          </div>
+        `;
 
+        try {
           const rawData = await this.loadAssetData(state.currentAsset);
           
-          if (rawData.length < 20) {
-            root.innerHTML = ui.renderErrorState(`数据不足：需要至少20天数据，当前仅有${rawData.length}天`);
-            return;
-          }
+          if (rawData.length < 20) throw new Error(`数据不足: 需要至少20天数据，当前仅有${rawData.length}天`);
 
           const dataWithMA = technicalAnalysis.calculateIndicators(rawData);
           const dataWithSignals = technicalAnalysis.generateSignals(dataWithMA);
-          const performance = technicalAnalysis.calculatePerformanceMetrics(dataWithSignals);
 
-          // Calculate metrics
-          const latest = dataWithSignals[dataWithSignals.length - 1] || {};
-          const previous = dataWithSignals[dataWithSignals.length - 2] || {};
+          const latest = dataWithSignals[dataWithSignals.length - 1];
+          const prev = dataWithSignals[dataWithSignals.length - 2];
+          const priceChange = prev ? (latest.price - prev.price) / prev.price * 100 : 0;
+          const recentSignals = dataWithSignals.filter(r => r.Signal).slice(-5).reverse();
           
-          const metrics = {
-            currentPosition: latest.POSITION || '未知',
-            latestPrice: latest.price || 0,
-            latestSecondaryPrice: latest.secondaryPrice || 0,
-            priceChange: previous.price ? ((latest.price - previous.price) / previous.price * 100) : 0,
-            latest20MA: latest.MA20,
-            latestTrend: latest.MAtrend || '未知',
-            volatility: latest.volatility || 0,
-            momentum: latest.momentum || 0,
-            confidence: latest.confidence || 0
-          };
-
-          const pricePosition = (latest.indicatorPrice != null && latest.MA20 != null && latest.MA20 !== 0) 
-            ? (latest.indicatorPrice > latest.MA20 ? '高于20日均线' : '低于20日均线') : '未知';
-
-          const recentSignals = dataWithSignals.filter(r => r.Signal && r.Signal !== '').slice(-5).reverse();
-          const signalStats = {
-            total: dataWithSignals.filter(r => r.Signal && r.Signal !== '').length,
-            buy: dataWithSignals.filter(r => r.Signal === '买入').length,
-            sell: dataWithSignals.filter(r => r.Signal === '卖出').length
-          };
-
-          // Generate gradient CSS
-          const gradientText = `background: linear-gradient(135deg, ${config.gradientColors[0]} 20%, ${config.gradientColors[1]} 50%, ${config.gradientColors[2]} 90%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;`;
+          const gradientStyle = `background: linear-gradient(120deg, ${config.gradientColors[0]} 20%, ${config.gradientColors[1]} 50%, ${config.gradientColors[2]} 90%);`;
 
           root.innerHTML = `
             ${ui.renderAssetTabs()}
-            <div class="glass-card rounded-3xl p-6 md:p-8 mb-6 fade-in">
-              <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-6xl font-black mb-4 flex items-center justify-center tracking-tight gradient-text" style="${gradientText}">
-                  <span class="text-5xl md:text-7xl mr-4 opacity-90">${config.symbol}</span>
+            <div class="black-gold-card rounded-3xl p-4 md:p-8 mb-6 fade-in">
+              <div class="text-center mb-10">
+                <h1 class="text-4xl md:text-5xl font-extrabold mb-4 flex items-center justify-center tracking-wider dynamic-gradient-text" style="${gradientStyle}">
+                  <span class="text-5xl md:text-6xl mr-4 opacity-80">${config.symbol}</span>
                   ${state.currentAsset} Unispark 量化
-                  <div class="status-indicator relative ml-6 mt-2">
-                    <div class="w-4 h-4 rounded-full" style="background-color: ${config.color}"></div>
+                  <div class="status-indicator-glow relative ml-4 mt-1">
+                    <div class="w-3 h-3 rounded-full" style="background-color: ${config.color}"></div>
                   </div>
                 </h1>
-                <p class="text-gray-400 text-lg mb-2">基于20日均线的专业级交易信号分析系统</p>
-                <p class="text-gray-500 text-sm">${config.description}</p>
-                ${state.currentAsset === 'TQQQ' ? '<div class="mt-4 inline-flex items-center px-4 py-2 bg-amber-500 bg-opacity-20 rounded-full border border-amber-500 border-opacity-30"><span class="text-amber-400 text-sm font-medium">⚠️ 交易标的：TQQQ | 指标基准：QQQ | 3倍杠杆</span></div>' : ''}
+                <p class="text-gray-400 text-base md:text-lg">${config.description} | 基于20日均线分析</p>
+                ${state.currentAsset === 'TQQQ' ? `<p class="text-amber-400 text-sm mt-2 bg-amber-900 bg-opacity-30 px-3 py-1 rounded-full inline-block">⚠️ 交易标的: TQQQ | 指标基准: QQQ</p>` : ''}
               </div>
 
-              <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                ${ui.renderMetricCard(
-                  '🎯 交易建议', 
-                  metrics.currentPosition,
-                  `置信度: ${metrics.confidence}%`,
-                  metrics.currentPosition === '持有' ? '🟢' : '🔴',
-                  metrics.currentPosition === '持有' ? '#22c55e' : '#ef4444'
-                )}
-                
-                ${ui.renderMetricCard(
-                  `💰 ${state.currentAsset}价格`,
-                  `${utils.formatNumber(metrics.latestPrice)}`,
-                  `24h: ${utils.formatPercentage(metrics.priceChange)}${config.showSecondary ? ` | QQQ: ${utils.formatNumber(metrics.latestSecondaryPrice)}` : ''}`,
-                  '💎',
-                  config.color,
-                  metrics.priceChange
-                )}
-                
-                ${ui.renderMetricCard(
-                  '📈 技术指标',
-                  `${utils.formatNumber(metrics.latest20MA)}`,
-                  `趋势: ${metrics.latestTrend} | ${pricePosition}${state.currentAsset === 'TQQQ' ? ' (基于QQQ)' : ''}`,
-                  metrics.latestTrend === '上升' ? '🚀' : '📉',
-                  '#E0E0E0'
-                )}
-                
-                ${ui.renderMetricCard(
-                  '📊 信号统计',
-                  signalStats.total.toString(),
-                  `买入: ${signalStats.buy} | 卖出: ${signalStats.sell}`,
-                  '🔔',
-                  config.color
-                )}
+              <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                ${ui.renderMetricCard('🎯 交易建议', latest.POSITION, '综合技术指标研判', latest.POSITION === '持有' ? '🟢' : '🔴', latest.POSITION === '持有' ? '#22c55e' : '#ef4444')}
+                ${ui.renderMetricCard(`💰 ${state.currentAsset}价格`, `$${utils.formatNumber(latest.price)}`, `24h: ${utils.formatPercentage(priceChange)} ${config.showSecondary ? `| QQQ: $${utils.formatNumber(latest.secondaryPrice)}` : ''}`, '💎', config.color)}
+                ${ui.renderMetricCard('📈 20日均线', `$${utils.formatNumber(latest.MA20)}`, `趋势: ${latest.MAtrend} | ${latest.indicatorPrice > latest.MA20 ? '高于均线' : '低于均线'}`, latest.MAtrend === '上升' ? '🚀' : '📉', '#E0E0E0')}
+                ${ui.renderMetricCard('📊 信号统计', `${dataWithSignals.filter(r => r.Signal).length}`, `买入: ${dataWithSignals.filter(r => r.Signal === '买入').length} | 卖出: ${dataWithSignals.filter(r => r.Signal === '卖出').length}`, '🔔', '#a78bfa')}
               </div>
 
-              <div class="grid lg:grid-cols-5 gap-6 mb-8">
-                <div class="lg:col-span-3 glass-card rounded-2xl p-6 slide-up">
-                  <h2 class="text-xl font-semibold text-gray-200 mb-6 flex items-center">
-                    <span class="mr-3" style="color: ${config.color}">📈</span>价格走势分析
-                    <div class="ml-auto flex items-center space-x-4 text-sm text-gray-400">
-                      <div class="tooltip" data-tooltip="波动率: ${metrics.volatility.toFixed(2)}%">
-                        <span>📊 波动: ${metrics.volatility.toFixed(1)}%</span>
-                      </div>
-                      <div class="tooltip" data-tooltip="价格动量指标">
-                        <span>⚡ 动量: ${utils.formatPercentage(metrics.momentum)}</span>
-                      </div>
-                    </div>
-                  </h2>
-                  <div class="chart-container">
-                    <canvas id="chart" height="140"></canvas>
-                  </div>
+              <div class="grid lg:grid-cols-5 gap-4 md:gap-6 mb-8">
+                <div class="lg:col-span-3 black-gold-card rounded-2xl p-4 md:p-6">
+                  <h2 class="text-xl font-semibold text-gray-200 mb-4 flex items-center"><span class="mr-3" style="color: ${config.color}">📈</span>价格走势与信号</h2>
+                  <div class="bg-black bg-opacity-25 rounded-xl p-2 md:p-4"><canvas id="chart" height="280"></canvas></div>
                 </div>
-                
-                <div class="lg:col-span-2 space-y-6">
-                  <div class="glass-card rounded-2xl p-6 slide-up">
-                    <h2 class="text-xl font-semibold text-gray-200 mb-6 flex items-center">
-                      <span class="mr-3" style="color: ${config.color}">🔍</span>最近交易信号
-                    </h2>
-                    <div class="space-y-3 max-h-80 overflow-y-auto">
-                      ${ui.renderSignalList(recentSignals)}
-                    </div>
-                  </div>
-                  
-                  ${ui.renderPerformancePanel(performance)}
+                <div class="lg:col-span-2 black-gold-card rounded-2xl p-4 md:p-6">
+                  <h2 class="text-xl font-semibold text-gray-200 mb-4 flex items-center"><span class="mr-3" style="color: ${config.color}">🔍</span>最近交易信号</h2>
+                  <div class="space-y-3 max-h-80 overflow-y-auto">${ui.renderSignalList(recentSignals)}</div>
                 </div>
               </div>
               
-              <div class="text-center mt-12 pt-8 border-t border-gray-700 border-opacity-50">
-                <div class="flex flex-col md:flex-row justify-center items-center space-y-2 md:space-y-0 md:space-x-8">
-                  <p class="text-gray-500 text-sm flex items-center">
-                    <span class="mr-2">⚠️</span>本分析仅供参考，投资有风险，决策需谨慎
-                  </p>
-                  <p class="text-gray-600 text-xs flex items-center">
-                    <span class="mr-2">🕒</span>最后更新: ${new Date().toLocaleString('zh-CN')}
-                  </p>
-                  <p class="text-gray-600 text-xs flex items-center">
-                    <span class="mr-2">📡</span>数据来源: 模拟交易数据
-                  </p>
-                </div>
+              <div class="text-center mt-8 pt-6 border-t border-gray-700 border-opacity-50">
+                <p class="text-gray-500 text-sm mb-2">⚠️ 本分析仅供参考，投资有风险，决策需谨慎。</p>
+                <p class="text-gray-600 text-xs">最后更新: ${new Date().toLocaleString('zh-CN')} | 数据来源: 模拟数据</p>
               </div>
             </div>
           `;
-
-          // Render chart after DOM update
-          setTimeout(() => {
-            chartRenderer.render(dataWithSignals, config);
-          }, 100);
-
-          state.retryCount = 0; // Reset retry count on success
+          
+          setTimeout(() => chartRenderer.render(dataWithSignals, config), 100);
+          state.retryCount = 0;
+          this.setupAutoRefresh();
 
         } catch (error) {
           console.error('Error rendering dashboard:', error);
-          
           if (state.retryCount < state.maxRetries) {
             state.retryCount++;
             setTimeout(() => this.renderDashboard(), 2000 * state.retryCount);
           } else {
-            root.innerHTML = ui.renderErrorState('系统遇到多次错误，请刷新页面重试');
+            root.innerHTML = `
+              ${ui.renderAssetTabs()}
+              <div class="black-gold-card rounded-3xl p-8 text-center fade-in">
+                <div class="text-6xl mb-4 text-red-400">❌</div>
+                <h2 class="text-2xl font-bold text-gray-200 mb-4">系统加载失败</h2>
+                <p class="text-gray-400">${error.message}</p>
+                <button onclick="location.reload()" class="mt-6 black-gold-card px-6 py-3 rounded-xl hover:scale-105 transition-transform">重新加载</button>
+              </div>
+            `;
           }
         } finally {
           state.isLoading = false;
@@ -1338,36 +494,11 @@
       }
     }
 
-    // Global functions
-    window.switchAsset = function(asset) {
-      if (state.setAsset(asset)) {
-        app.renderDashboard();
-      }
-    };
-
-    // Initialize application
+    // Initialize the application
     let app;
-    document.addEventListener('DOMContentLoaded', () => {
-      app = new QuantApp();
-    });
+    document.addEventListener('DOMContentLoaded', () => { app = new QuantApp(); });
+    window.addEventListener('beforeunload', () => { if (app) app.pauseAutoRefresh(); state.destroyChart(); });
 
-    // Handle page unload
-    window.addEventListener('beforeunload', () => {
-      if (state.refreshInterval) {
-        clearInterval(state.refreshInterval);
-      }
-      state.destroyChart();
-    });
-
-    // Service Worker registration for offline support (optional)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        // Uncomment to enable service worker
-        // navigator.serviceWorker.register('/sw.js')
-        //   .then(registration => console.log('SW registered'))
-        //   .catch(registrationError => console.log('SW registration failed'));
-      });
-    }
   </script>
 
 </body>
