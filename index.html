@@ -344,7 +344,7 @@
 <body>
 
   <div id="apiStatus" class="api-status warning">🟡 初始化系统...</div>
-  <div class="watermark">Unispark Professional Trading System v2.0</div>
+  <div class="watermark">Unispark Professional Trading System v2.1</div>
 
   <div id="root" class="max-w-7xl mx-auto p-4 md:p-6">
     <div class="premium-card rounded-3xl p-8 text-center">
@@ -368,6 +368,14 @@
       // API Configuration - Financial Modeling Prep
       FMP_API_KEY: "cKlA3lVOMxMjg4hJsC0cn1YAIUu1Hk8P",
       FMP_BASE_URL: "https://financialmodelingprep.com/api/v3",
+      
+      // Alpha Vantage API configuration
+      ALPHA_VANTAGE_API_KEY: "VHP8009U5A1F7XRG",
+      ALPHA_VANTAGE_BASE_URL: "https://www.alphavantage.co/query",
+      
+      // RapidAPI Alpha Vantage configuration (backup)
+      RAPIDAPI_KEY: "3e7dac5a3amsha849adb1f85821ep1e948ajsn42a2faebbec5",
+      RAPIDAPI_ALPHA_VANTAGE_HOST: "alpha-vantage.p.rapidapi.com",
       
       // Backup CoinGecko API
       COINGECKO_BASE_URL: "https://api.coingecko.com/api/v3",
@@ -496,9 +504,10 @@
           const response = await fetch(url, {
             ...options,
             signal: controller.signal,
+            cache: 'default', // 明确设置缓存策略避免CORS问题
+            mode: 'cors', // 明确设置CORS模式
             headers: {
               'Accept': 'application/json',
-              'Cache-Control': 'no-cache',
               ...options.headers
             }
           });
@@ -652,6 +661,124 @@
       }
     }
 
+    async function fetchAlphaVantageData(symbol) {
+      console.log(`📈 获取Alpha Vantage数据: ${symbol}`);
+      
+      const cacheKey = getCacheKey(symbol, 'alpha_vantage');
+      const cached = getCacheData(cacheKey);
+      if (cached) {
+        console.log(`📋 使用Alpha Vantage缓存数据: ${symbol}`);
+        return cached;
+      }
+
+      try {
+        // 尝试直接Alpha Vantage API
+        const url = `${CONFIG.ALPHA_VANTAGE_BASE_URL}?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=compact&apikey=${CONFIG.ALPHA_VANTAGE_API_KEY}`;
+        
+        const data = await fetchWithRetry(url);
+
+        if (data['Error Message']) {
+          throw new Error(`Alpha Vantage Error: ${data['Error Message']}`);
+        }
+
+        if (data['Note']) {
+          throw new Error('Alpha Vantage API call frequency limit reached');
+        }
+
+        const timeSeries = data['Time Series (Daily)'];
+        if (!timeSeries) {
+          throw new Error('Invalid Alpha Vantage response format');
+        }
+
+        const processedData = Object.entries(timeSeries)
+          .slice(0, CONFIG.CHART_DATA_POINTS)
+          .map(([date, values]) => ({
+            date: new Date(date),
+            price: parseFloat(values['4. close']) || 0,
+            indicatorPrice: parseFloat(values['4. close']) || 0,
+            volume: parseInt(values['5. volume']) || 0,
+            high: parseFloat(values['2. high']) || 0,
+            low: parseFloat(values['3. low']) || 0,
+            open: parseFloat(values['1. open']) || 0
+          }))
+          .filter(item => item.price > 0)
+          .sort((a, b) => a.date - b.date);
+
+        if (processedData.length === 0) {
+          throw new Error('No valid price data received from Alpha Vantage');
+        }
+
+        setCacheData(cacheKey, processedData);
+        updateApiStatus('online', '实时Alpha Vantage数据');
+        
+        console.log(`✅ Alpha Vantage数据获取成功: ${symbol}, ${processedData.length}条记录`);
+        return processedData;
+
+      } catch (error) {
+        console.error(`❌ Alpha Vantage API错误 (${symbol}): ${error.message}`);
+        throw error;
+      }
+    }
+
+    async function fetchRapidAPIAlphaVantage(symbol) {
+      console.log(`🚀 获取RapidAPI Alpha Vantage数据: ${symbol}`);
+      
+      const cacheKey = getCacheKey(symbol, 'rapidapi_alpha');
+      const cached = getCacheData(cacheKey);
+      if (cached) {
+        console.log(`📋 使用RapidAPI缓存数据: ${symbol}`);
+        return cached;
+      }
+
+      try {
+        const url = `https://${CONFIG.RAPIDAPI_ALPHA_VANTAGE_HOST}/query?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=compact&datatype=json`;
+        
+        const data = await fetchWithRetry(url, {
+          headers: {
+            'X-Rapidapi-Key': CONFIG.RAPIDAPI_KEY,
+            'X-Rapidapi-Host': CONFIG.RAPIDAPI_ALPHA_VANTAGE_HOST
+          }
+        });
+
+        if (data['Error Message']) {
+          throw new Error(`RapidAPI Alpha Vantage Error: ${data['Error Message']}`);
+        }
+
+        const timeSeries = data['Time Series (Daily)'];
+        if (!timeSeries) {
+          throw new Error('Invalid RapidAPI Alpha Vantage response format');
+        }
+
+        const processedData = Object.entries(timeSeries)
+          .slice(0, CONFIG.CHART_DATA_POINTS)
+          .map(([date, values]) => ({
+            date: new Date(date),
+            price: parseFloat(values['4. close']) || 0,
+            indicatorPrice: parseFloat(values['4. close']) || 0,
+            volume: parseInt(values['5. volume']) || 0,
+            high: parseFloat(values['2. high']) || 0,
+            low: parseFloat(values['3. low']) || 0,
+            open: parseFloat(values['1. open']) || 0
+          }))
+          .filter(item => item.price > 0)
+          .sort((a, b) => a.date - b.date);
+
+        if (processedData.length === 0) {
+          throw new Error('No valid price data received from RapidAPI');
+        }
+
+        setCacheData(cacheKey, processedData);
+        updateApiStatus('online', '实时RapidAPI数据');
+        
+        console.log(`✅ RapidAPI Alpha Vantage数据获取成功: ${symbol}, ${processedData.length}条记录`);
+        return processedData;
+
+      } catch (error) {
+        console.error(`❌ RapidAPI Alpha Vantage API错误 (${symbol}): ${error.message}`);
+        throw error;
+      }
+    }
+
     async function fetchFMPCryptoData(symbol) {
       console.log(`🪙 获取FMP加密货币数据: ${symbol}`);
       
@@ -743,30 +870,89 @@
       }
 
       try {
-        // Fetch both TQQQ and QQQ data in parallel
-        const [tqqqPromise, qqqPromise] = await Promise.allSettled([
-          fetchFMPHistoricalData('TQQQ'),
-          fetchFMPHistoricalData('QQQ')
-        ]);
-
+        // 尝试多个API源获取TQQQ和QQQ数据
         let tqqqData = [];
         let qqqData = [];
 
-        if (tqqqPromise.status === 'fulfilled') {
-          tqqqData = tqqqPromise.value;
-        } else {
-          console.warn('TQQQ数据获取失败，使用模拟数据');
-          tqqqData = generateHighQualityMockData(70, 'TQQQ');
+        // 1. 首先尝试FMP API
+        try {
+          console.log('🔄 尝试FMP API获取TQQQ和QQQ数据...');
+          const [tqqqPromise, qqqPromise] = await Promise.allSettled([
+            fetchFMPHistoricalData('TQQQ'),
+            fetchFMPHistoricalData('QQQ')
+          ]);
+
+          if (tqqqPromise.status === 'fulfilled') {
+            tqqqData = tqqqPromise.value;
+            console.log('✅ FMP TQQQ数据获取成功');
+          }
+          
+          if (qqqPromise.status === 'fulfilled') {
+            qqqData = qqqPromise.value;
+            console.log('✅ FMP QQQ数据获取成功');
+          }
+        } catch (fmpError) {
+          console.warn('❌ FMP API获取失败:', fmpError.message);
         }
 
-        if (qqqPromise.status === 'fulfilled') {
-          qqqData = qqqPromise.value;
-        } else {
-          console.warn('QQQ数据获取失败，使用模拟数据');
+        // 2. 如果FMP失败，尝试Alpha Vantage API
+        if (tqqqData.length === 0 || qqqData.length === 0) {
+          console.log('🔄 FMP失败，尝试Alpha Vantage API...');
+          
+          try {
+            if (tqqqData.length === 0) {
+              tqqqData = await fetchAlphaVantageData('TQQQ');
+              console.log('✅ Alpha Vantage TQQQ数据获取成功');
+            }
+          } catch (alphaError) {
+            console.warn('❌ Alpha Vantage TQQQ获取失败:', alphaError.message);
+          }
+
+          try {
+            if (qqqData.length === 0) {
+              qqqData = await fetchAlphaVantageData('QQQ');
+              console.log('✅ Alpha Vantage QQQ数据获取成功');
+            }
+          } catch (alphaError) {
+            console.warn('❌ Alpha Vantage QQQ获取失败:', alphaError.message);
+          }
+        }
+
+        // 3. 如果Alpha Vantage也失败，尝试RapidAPI
+        if (tqqqData.length === 0 || qqqData.length === 0) {
+          console.log('🔄 Alpha Vantage失败，尝试RapidAPI...');
+          
+          try {
+            if (tqqqData.length === 0) {
+              tqqqData = await fetchRapidAPIAlphaVantage('TQQQ');
+              console.log('✅ RapidAPI TQQQ数据获取成功');
+            }
+          } catch (rapidError) {
+            console.warn('❌ RapidAPI TQQQ获取失败:', rapidError.message);
+          }
+
+          try {
+            if (qqqData.length === 0) {
+              qqqData = await fetchRapidAPIAlphaVantage('QQQ');
+              console.log('✅ RapidAPI QQQ数据获取成功');
+            }
+          } catch (rapidError) {
+            console.warn('❌ RapidAPI QQQ获取失败:', rapidError.message);
+          }
+        }
+
+        // 4. 如果所有API都失败，使用高质量模拟数据
+        if (tqqqData.length === 0) {
+          console.warn('🎭 所有TQQQ API都失败，使用高质量模拟数据');
+          tqqqData = generateHighQualityMockData(75, 'TQQQ');
+        }
+
+        if (qqqData.length === 0) {
+          console.warn('🎭 所有QQQ API都失败，使用高质量模拟数据');
           qqqData = generateHighQualityMockData(400, 'QQQ');
         }
 
-        // Merge data by date, using QQQ as the indicator for TQQQ trading signals
+        // 合并数据，使用QQQ作为TQQQ交易信号的指标
         const mergedData = [];
         const qqqMap = new Map(qqqData.map(item => [item.date.getTime(), item]));
 
@@ -778,7 +964,10 @@
             price: tqqqItem.price, // TQQQ price for position
             indicatorPrice: qqqItem ? qqqItem.price : tqqqItem.price / 3, // QQQ price for signals
             secondaryPrice: qqqItem ? qqqItem.price : tqqqItem.price / 3, // QQQ price for display
-            volume: tqqqItem.volume + (qqqItem ? qqqItem.volume : 0)
+            volume: tqqqItem.volume + (qqqItem ? qqqItem.volume : 0),
+            high: tqqqItem.high,
+            low: tqqqItem.low,
+            open: tqqqItem.open
           });
         });
 
@@ -1428,7 +1617,7 @@
                   </div>
                   <div class="flex justify-between items-center">
                     <span class="text-gray-400">算法版本:</span>
-                    <span class="font-bold text-gray-300">v2.0</span>
+                    <span class="font-bold text-gray-300">v2.1</span>
                   </div>
                   <div class="bg-gray-800 rounded-lg p-3 mt-4">
                     <p class="text-xs text-gray-400 mb-2">🎯 算法特色</p>
@@ -1450,7 +1639,7 @@
                 <span>最后更新: ${globalState.lastUpdateTime ? globalState.lastUpdateTime.toLocaleString('zh-CN') : '未知'}</span>
                 <span>数据源: ${globalState.apiHealthy ? '实时API' : '高质量模拟'}</span>
                 <span>算法: 20日均线量化策略</span>
-                <span>版本: Professional v2.0</span>
+                <span>版本: Professional v2.1</span>
               </div>
             </div>
           </div>
@@ -1746,7 +1935,7 @@
 
     // Initialize the professional trading system
     document.addEventListener('DOMContentLoaded', async function() {
-      console.log('🚀 初始化Unispark专业量化交易系统...');
+      console.log('🚀 初始化Unispark专业量化交易系统 v2.1...');
       
       try {
         updateApiStatus('warning', '系统初始化中...');
